@@ -122,8 +122,8 @@ def _run(name, operations_callback, stream_stop_event=None):
         # If no state exists, create an initial subscription state with cursor 0
         SubscriptionState.create(service=name, cursor=0)
 
-    # Initialize the firehose client with the parameters
-    client = FirehoseSubscribeReposClient(params)
+    # Initialize the firehose client w/o a cursor for now
+    client = FirehoseSubscribeReposClient()
 
     def on_message_handler(message: firehose_models.MessageFrame) -> None:
         """
