@@ -113,14 +113,14 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
                     #logger.info(f"Fetched post {fetched_post.author}")
 
                     # check indexed_at type
-                    logger.info(f"indexed_at type: {type(indexed_at)}")
+                    #logger.info(f"indexed_at type: {type(indexed_at)}")
 
                     try:
                         indexed_at = datetime.fromisoformat(indexed_at)
                     except Exception as e:
                         raise e
 
-                    logger.info(f"indexed_at type after: {type(indexed_at)}")
+                    #logger.info(f"indexed_at type after: {type(indexed_at)}")
 
                     # Calculate time difference in hours
                     time_diff = datetime.now(timezone.utc) - indexed_at
@@ -235,7 +235,7 @@ def start_scheduler(client: Client, schedule_hydration: bool = False) -> Backgro
         # Schedule hydrate_posts_with_interactions to run every 15 minutes
         scheduler.add_job(
             hydrate_posts_with_interactions,
-            trigger=IntervalTrigger(minutes=15),
+            trigger=IntervalTrigger(minutes=20),
             args=[client],
             id='hydrate_posts_interval',
             max_instances=1,
