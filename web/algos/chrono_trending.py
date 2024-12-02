@@ -40,9 +40,14 @@ def handler(cursor: Optional[str], limit: int) -> dict:
     if not isinstance(limit, int):
         limit = int(limit)
 
-    if limit != 1: # Limit 1 shows up when someone indexes the feed in search or when reuests come from following feed
-        # Adjust limit to the closest multiple of 5
-        limit = adjust_limit(limit)
+    if limit == 1:
+        return {
+            'cursor': CURSOR_EOF,
+            'feed': []
+        }
+
+    # Adjust limit to the closest multiple of 5
+    limit = adjust_limit(limit)
 
     try:
         # Define time thresholds
@@ -58,7 +63,7 @@ def handler(cursor: Optional[str], limit: int) -> dict:
         ]
 
         # Calculate total number of pattern repeats needed
-        total_patterns = limit // 5 if limit!=1 else 1  # Each pattern adds 5 posts
+        total_patterns = limit // 5  # Each pattern adds 5 posts
 
         # Initialize cursors for each post type
         if cursor and cursor != CURSOR_EOF:
@@ -170,8 +175,6 @@ def handler(cursor: Optional[str], limit: int) -> dict:
             for category, count in pattern:
                 for _ in range(count):
                     try:
-                        if limit == 1: # Limit 1 shows up when someone indexes the feed in search
-                            category = 'trending_posts'
                         if limit == 10: # Limit 10 when reuests come from following feed
                             category = 'trending_posts'
 
