@@ -82,15 +82,30 @@ def cleanup_db(clear_days: int = 3):
     vacuum_database()
 
 # Hydration Function with Rate Limit and Expired Token Handling
+import logging
+from datetime import datetime, timezone, timedelta
+from peewee import fn
+from typing import List
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# Assuming Post is your Peewee model and Client is your API client
+# from your_models import Post
+# from your_api_client import Client, exceptions
+
 def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
     try:
-        # Retrieve all post URIs from the database
+        # Retrieve all post URIs and current interactions from the database
         posts = Post.select(Post.uri, Post.interactions)
         uris = [post.uri for post in posts]
 
         if not uris:
             logger.info("No posts found in the database to hydrate.")
             return
+
+        # Initialize a list to collect posts that need to be updated
+        posts_to_update = []
 
         # Process URIs in batches
         for i in range(0, len(uris), batch_size):
@@ -109,18 +124,19 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
                     like_count = fetched_post.like_count
                     reply_count = fetched_post.reply_count
                     repost_count = fetched_post.repost_count
-                    indexed_at = fetched_post.indexed_at
-                    #logger.info(f"Fetched post {fetched_post.author}")
+                    indexed_at_str = fetched_post.indexed_at
 
-                    # check indexed_at type
-                    #logger.info(f"indexed_at type: {type(indexed_at)}")
-
+                    # Convert indexed_at to datetime object
                     try:
-                        indexed_at = datetime.fromisoformat(indexed_at)
+                        indexed_at = datetime.fromisoformat(indexed_at_str)
+                        if indexed_at.tzinfo is None:
+                            # Assume UTC if timezone is not provided
+                            indexed_at = indexed_at.replace(tzinfo=timezone.utc)
+                        else:
+                            indexed_at = indexed_at.astimezone(timezone.utc)
                     except Exception as e:
-                        raise e
-
-                    #logger.info(f"indexed_at type after: {type(indexed_at)}")
+                        logger.error(f"Error parsing indexed_at for post {uri}: {e}")
+                        continue
 
                     # Calculate time difference in hours
                     time_diff = datetime.now(timezone.utc) - indexed_at
@@ -131,34 +147,19 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
                     # Adding 2 to avoid division by zero and to give a slight boost to newer posts
                     interactions_score = like_count + (reply_count * 2) + (repost_count * 3)
                     hot_score = interactions_score / ((time_diff_hours + 2) ** 1.5)
-                    hot_score *= 100
+                    hot_score *= 100  # Scaling the score
 
-                    # Update the Post record if the hot_score has changed
-                    with db.atomic():
-                        rows_updated = (
-                            Post.update(interactions=hot_score)
-                            .where(
-                                (Post.uri == uri) &
-                                (Post.interactions != hot_score)
-                            )
-                            .execute()
-                        )
-                        # Optional hydration below
+                    # Round the hot_score to an integer for consistency
+                    hot_score = int(hot_score)
 
-                        #update indexed_at once
-                        #Post.update(indexed_at=indexed_at).where(Post.uri == uri).execute()
-                        #logger.info(f"indexed_at updated for post {uri} to {indexed_at}")
-
-                        # delete posts from exluded dids if they were accidentally added in the db
-                        # handles_to_exclude = ['flintds.bsky.social']
-                        # if fetched_post.author.handle in handles_to_exclude:
-                        #     Post.delete().where(Post.uri == uri).execute()
-                        #     logger.info(f"Deleted post {uri} from excluded DID: {fetched_post.author}")
-
-                    if rows_updated:
-                        logger.info(f"Hydrated post {uri} with hot_score: {int(hot_score)}.")
-                    else:
-                        logger.info(f"No update needed for post {uri}; interactions unchanged.")
+                    # Fetch the current interaction score from the database
+                    current_post = next((p for p in posts if p.uri == uri), None)
+                    if current_post and current_post.interactions != hot_score:
+                        # Update the interactions and indexed_at in memory
+                        current_post.interactions = hot_score
+                        # Optionally update indexed_at if needed
+                        # current_post.indexed_at = indexed_at
+                        posts_to_update.append(current_post)
 
             except exceptions.AtProtocolError as api_err:
                 if hasattr(api_err, 'response'):
@@ -167,7 +168,7 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
                         # Rate limited during hydration
                         reset_timestamp = api_err.response.headers.get('RateLimit-Reset')
                         if reset_timestamp:
-                            reset_time = datetime.fromtimestamp(int(reset_timestamp.total_seconds()), timezone.utc)
+                            reset_time = datetime.fromtimestamp(int(reset_timestamp), timezone.utc)
                         else:
                             reset_time = datetime.now(timezone.utc) + timedelta(seconds=60)  # Default to 60 seconds
                         logger.warning(f"Rate limit exceeded during hydration. Next attempt at {reset_time} UTC.")
@@ -181,6 +182,16 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
                     logger.error(f"API error while fetching posts without response: {api_err}")
             except Exception as e:
                 logger.error(f"Unexpected error while hydrating posts: {e}")
+
+        if posts_to_update:
+            try:
+                with db.atomic():
+                    Post.bulk_update(posts_to_update, fields=[Post.interactions])
+                logger.info(f"Hydrated {len(posts_to_update)} posts with updated hot_scores.")
+            except Exception as e:
+                logger.error(f"Failed to bulk update posts: {e}")
+        else:
+            logger.info("No posts needed updating based on the latest interactions.")
 
     except Exception as e:
         logger.error(f"Error in hydration process: {e}")
@@ -232,7 +243,7 @@ def start_scheduler(client: Client, schedule_hydration: bool = False) -> Backgro
     logger.info("Scheduled daily cleanup_db job at 8 AM UTC.")
 
     if schedule_hydration:
-        # Schedule hydrate_posts_with_interactions to run every 15 minutes
+        # Schedule hydrate_posts_with_interactions to run every 20 minutes
         scheduler.add_job(
             hydrate_posts_with_interactions,
             trigger=IntervalTrigger(minutes=20),
@@ -242,7 +253,7 @@ def start_scheduler(client: Client, schedule_hydration: bool = False) -> Backgro
             coalesce=True,  # If job is missed, run it immediately
             replace_existing=True
         )
-        logger.info("Scheduled interval hydrate_posts_with_interactions job every 15 minutes.")
+        logger.info("Scheduled interval hydrate_posts_with_interactions job every 20 minutes.")
 
     # Add listener for job events
     scheduler.add_listener(lambda event: hydration_job_listener(event, scheduler), EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
