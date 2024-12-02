@@ -9,11 +9,11 @@ file = 'file:/var/data/new_cosmere_feed.db?mode=ro' if not DEV_MODE else 'file:.
 db = peewee.SqliteDatabase(
     file,
     uri=True,
-    timeout=30,
+    timeout=60,
     pragmas={
         'journal_mode': 'wal',
-        'cache_size': -1024 * 128,
-        'busy_timeout': 30000
+        'cache_size': -1024 * 256,
+        'busy_timeout': 60000
     }
 )
 

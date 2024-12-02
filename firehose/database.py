@@ -21,10 +21,10 @@ logger = logging.getLogger(__name__)
 
 # Database setup
 file = '/var/data/new_cosmere_feed.db' if not DEV_MODE else 'new_cosmere_feed.db'
-db = peewee.SqliteDatabase(file, timeout=30, pragmas={
+db = peewee.SqliteDatabase(file, timeout=60, pragmas={
     'journal_mode': 'wal',
-    'cache_size': -1024 * 128,
-    'busy_timeout': 30000
+    'cache_size': -1024 * 256,
+    'busy_timeout': 60000
 })
 
 # Database Models
