@@ -153,12 +153,11 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
                     hot_score = int(hot_score)
 
                     # Fetch the current interaction score from the database
-                    current_post = next((p for p in posts if p.uri == uri), None)
+                    current_post = Post.get_or_none(Post.uri == uri)
                     if current_post and current_post.interactions != hot_score:
-                        # Update the interactions and indexed_at in memory
+                        # Update the interactions in list for bulk update
                         current_post.interactions = hot_score
-                        # Optionally update indexed_at if needed
-                        # current_post.indexed_at = indexed_at
+                        #logger.info(f"{current_post}")
                         posts_to_update.append(current_post)
 
             except exceptions.AtProtocolError as api_err:
@@ -186,8 +185,13 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
         if posts_to_update:
             try:
                 with db.atomic():
-                    Post.bulk_update(posts_to_update, fields=[Post.interactions])
-                logger.info(f"Hydrated {len(posts_to_update)} posts with updated hot_scores.")
+                    updated = Post.bulk_update(posts_to_update, fields=['interactions'])
+                # with db.atomic():
+                #     updated = 0
+                #     for post in posts_to_update:
+                #         updated += post.save()
+
+                logger.info(f"Hydrated {updated} posts with updated hot_scores.")
             except Exception as e:
                 logger.error(f"Failed to bulk update posts: {e}")
         else:
