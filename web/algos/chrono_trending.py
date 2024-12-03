@@ -11,7 +11,7 @@ CURSOR_EOF = 'eof'
 
 DID_TO_PRIORITIZE = 'did:plc:wihwdzwkb6nd3wb565kujg2f'
 TRENDING_THRESHOLD = 24  # Hours
-INTERACTIONS_THRESHOLD = 30  # Minimum hot score for trending posts
+INTERACTIONS_THRESHOLD = 20  # Minimum hot score for trending posts
 
 def encode_cursor(cursors: Dict[str, Optional[str]]) -> str:
     return json.dumps(cursors)
