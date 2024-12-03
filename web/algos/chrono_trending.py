@@ -11,7 +11,7 @@ CURSOR_EOF = 'eof'
 
 DID_TO_PRIORITIZE = 'did:plc:wihwdzwkb6nd3wb565kujg2f'
 TRENDING_THRESHOLD = 24  # Hours
-INTERACTIONS_THRESHOLD = 20  # Minimum hot score for trending posts
+INTERACTIONS_THRESHOLD = 30  # Minimum hot score for trending posts
 
 def encode_cursor(cursors: Dict[str, Optional[str]]) -> str:
     return json.dumps(cursors)
@@ -43,7 +43,7 @@ def handler(cursor: Optional[str], limit: int) -> dict:
     if limit == 1:
         return {
             'cursor': CURSOR_EOF,
-            'feed': []
+            'feed': [{'post': Post.select().order_by(Post.indexed_at.desc(), Post.cid.desc()).limit(1).get().uri}],
         }
 
     # Adjust limit to the closest multiple of 5
