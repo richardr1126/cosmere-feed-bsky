@@ -40,14 +40,8 @@ def handler(cursor: Optional[str], limit: int) -> dict:
     if not isinstance(limit, int):
         limit = int(limit)
 
-    if limit == 1:
-        return {
-            'cursor': CURSOR_EOF,
-            'feed': [{'post': Post.select().order_by(Post.indexed_at.desc(), Post.cid.desc()).limit(1).get().uri}],
-        }
-
     # Adjust limit to the closest multiple of 5
-    limit = adjust_limit(limit)
+    limit = adjust_limit(limit) if limit != 1 else 1
 
     try:
         # Define time thresholds
@@ -63,7 +57,7 @@ def handler(cursor: Optional[str], limit: int) -> dict:
         ]
 
         # Calculate total number of pattern repeats needed
-        total_patterns = limit // 5  # Each pattern adds 5 posts
+        total_patterns = limit // 5  if limit != 1 else 1
 
         # Initialize cursors for each post type
         if cursor and cursor != CURSOR_EOF:
@@ -126,6 +120,14 @@ def handler(cursor: Optional[str], limit: int) -> dict:
         main_cursor_condition = build_cursor_condition(main_cursor)
         if main_cursor_condition:
             main_posts_query = main_posts_query.where(main_cursor_condition)
+
+        if limit == 1:
+            main_posts_query = main_posts_query.limit(1)
+            return {
+                'cursor': CURSOR_EOF,
+                'feed': [{'post': main_posts_query[0].uri}]
+            }
+
 
         if trending_cids:
             main_posts_query = main_posts_query.where(Post.cid.not_in(trending_cids))
