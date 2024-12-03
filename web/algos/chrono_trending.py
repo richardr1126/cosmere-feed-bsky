@@ -121,16 +121,15 @@ def handler(cursor: Optional[str], limit: int) -> dict:
         if main_cursor_condition:
             main_posts_query = main_posts_query.where(main_cursor_condition)
 
+        if trending_cids:
+            main_posts_query = main_posts_query.where(Post.cid.not_in(trending_cids))
+
         if limit == 1:
             main_posts_query = main_posts_query.limit(1)
             return {
                 'cursor': CURSOR_EOF,
                 'feed': [{'post': main_posts_query[0].uri}]
             }
-
-
-        if trending_cids:
-            main_posts_query = main_posts_query.where(Post.cid.not_in(trending_cids))
 
         main_posts = list(main_posts_query.limit(limit))  # Fetch up to 'limit' main posts
         logger.debug(f"Fetched {len(main_posts)} main posts excluding trending posts")
