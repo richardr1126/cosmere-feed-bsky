@@ -11,6 +11,8 @@
 
 > This project builds upon the original Python feed generator by [@MarshalX](https://github.com/MarshalX).
 
+For more details on the official feed generator, refer to the [Bluesky Social Feed Generator Overview](https://github.com/bluesky-social/feed-generator#overview).
+
 ## Features
 
 - The generator offers custom filtering using SQLite and regular expressions to identify Cosmere-related content.
@@ -18,8 +20,6 @@
 - Deployment is streamlined with `gunicorn` (2 workers) and managed using `honcho` (see Procfile) to run `web` (with 2 workers) seperatly from `firehose` data stream.
 - Will run on **0.5 CPU**, **0.5 GB RAM**.
 > **Note:** Posts are only kept for 3 days, and trending posts are calculated based on interactions within the last 24 hours.
-
-For more details, refer to the [Bluesky Social Feed Generator Overview](https://github.com/bluesky-social/feed-generator#overview).
 
 ## Filters
 
