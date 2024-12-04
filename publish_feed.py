@@ -30,7 +30,7 @@ DISPLAY_NAME: str = 'Cosmere'
 
 # (Optional) A description of your feed
 # Ex: Top trending content from the whole network
-DESCRIPTION: str = "Realtime gateway into discussion being had about the Cosmere by Brandon Sanderson. #Stormlight #Mistborn\n\nCosmere feed is a mix of chronological and trending cosmere posts. Be careful for spoilers!\n\nCode @ https://github.com/richardr1126/cosmere-feed-bsky?tab=readme-ov-file#filters"
+DESCRIPTION: str = "Realtime gateway into discussion being had about the Cosmere by Brandon Sanderson. #Stormlight #Mistborn\n\nCosmere feed is a mix of chronological and trending cosmere posts. Be careful for spoilers!\n\nCode @ https://github.com/richardr1126/cosmere-feed-bsky?tab=readme-ov-file#features"
 
 # (Optional) The path to an image to be used as your feed's avatar
 # Ex: ./path/to/avatar.jpeg

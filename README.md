@@ -9,9 +9,7 @@
 
 **Cosmere ATProto Feed Generator** is a tailored feed service for fans of Brandon Sanderson's Cosmere universe, built using the [AT Protocol SDK for Python](https://github.com/MarshalX/atproto). It filters and combines trending and chronological posts related to the Cosmere, delivering a curated content stream to users.
 
-> This project builds upon the original Python feed generator by [@MarshalX](https://github.com/MarshalX).
-
-For more details on the official feed generator, refer to the [Bluesky Social Feed Generator Overview](https://github.com/bluesky-social/feed-generator#overview).
+> This project builds upon the original [Python feed generator](https://github.com/MarshalX/bluesky-feed-generator) by [@MarshalX](https://github.com/MarshalX).
 
 ## Features
 
