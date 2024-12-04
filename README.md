@@ -1,4 +1,4 @@
-# Cosmere ATProto Feed Generator
+# Cosmere ATProto Feed Generator Flask Server
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue.svg)
