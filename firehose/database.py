@@ -13,7 +13,7 @@ from apscheduler.jobstores.base import JobLookupError
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
-from atproto import Client, IdResolver, SessionEvent, Session, exceptions, models
+from atproto import Client, IdResolver, SessionEvent, Session, exceptions
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -151,38 +151,6 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
 
                     # Round the hot_score to an integer for consistency
                     hot_score = int(hot_score)
-
-                    if hot_score > 400:
-                        try:
-                            # create client proxied to Bluesky Chat service
-                            dm_client = client.with_bsky_chat_proxy()
-                            # create shortcut to convo methods
-                            dm = dm_client.chat.bsky.convo
-                            # resolve DID
-                            chat_to = fetched_post.author.did
-                            # create or get conversation with chat_to
-                            convo = dm.get_convo_for_members(
-                                models.ChatBskyConvoGetConvoForMembers.Params(members=[chat_to]),
-                            ).convo
-                            # print convo info
-                            logger.info(f'\nConvo ID: {convo.id}')
-                            logger.info('Convo members:')
-                            for member in convo.members:
-                                logger.info(f'- {member.display_name} ({member.did})')
-
-                            # send a message to the conversation
-                            dm.send_message(
-                                models.ChatBskyConvoSendMessage.Data(
-                                    convo_id=convo.id,
-                                    message=models.ChatBskyConvoDefs.MessageInput(
-                                        text='Your post is trending highly on the Cosmere Feed! 🚀\nhttps://bsky.app/profile/richardroberson.dev/feed/cosmere',
-                                    ),
-                                )
-                            )
-                            logger.info('\nMessage sent!')
-                        except exceptions.BadRequestError as e:
-                            logger.warning(f'Cannot dm: {chat_to} - {e.response.content.message}')
-
 
                     # Fetch the current interaction score from the database
                     current_post = Post.get_or_none(Post.uri == uri)
