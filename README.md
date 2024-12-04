@@ -9,7 +9,15 @@
 
 **Cosmere ATProto Feed Generator** is a tailored feed service for fans of Brandon Sanderson's Cosmere universe, built using the [AT Protocol SDK for Python](https://github.com/MarshalX/atproto). It filters and combines trending and chronological posts related to the Cosmere, delivering a curated content stream to users.
 
-> **Credit:** This project builds upon the original Python feed generator by [@MarshalX](https://github.com/MarshalX).
+> This project builds upon the original Python feed generator by [@MarshalX](https://github.com/MarshalX).
+
+## Features
+
+- The generator offers custom filtering using SQLite and regular expressions to identify Cosmere-related content.
+- It integrates trending posts by calculating interaction scores and maintains the database by cleaning outdated entries with `apscheduler`.
+- Deployment is streamlined with `gunicorn` (2 workers) and managed using `honcho` (see Procfile) to run `web` (with 2 workers) seperatly from `firehose` data stream.
+- Will run on **0.5 CPU**, **0.5 GB RAM**.
+> **Note:** Posts are only kept for 3 days, and trending posts are calculated based on interactions within the last 24 hours.
 
 For more details, refer to the [Bluesky Social Feed Generator Overview](https://github.com/bluesky-social/feed-generator#overview).
 
@@ -47,7 +55,7 @@ cd cosmere-feed-generator
 Create and activate a Conda environment:
 
 ```shell
-conda create --name cosmere-feed python=3.9
+conda create --name cosmere-feed
 conda activate cosmere-feed
 ```
 
@@ -66,23 +74,17 @@ cp example.env .env
 Open `.env` in your preferred text editor and fill in the necessary variables.  
 > **Note:** To obtain `CHRONO_TRENDING_URI`, publish the feed first using `publish_feed.py`.
 
-## Cloning the Cosmere Feed
+## Making your own Feed
 
 To create your own feed, install dependencies, configure environment variables, and customize the settings:
 
-1. **Install Dependencies and Configure:**
+1. **Update files:**
+   - Update `publish_feed.py` with your details. **(REQUIRED)**
+   - Modify filters in `firehose/data_filter.py`. **(OPTIONAL)**
+   - Change database routes in `firehose/database.py` and `web/database_ro.py`. **(REQUIRED for production)**
+   > **Note:** Because current DB folder for production `/var/data` might not be accessible in your environment.
 
-    ```shell
-    pip install -r requirements.txt
-    cp example.env .env
-    ```
-
-2. **Customize Settings:**
-   - Update `publish_feed.py` with your details.
-   - Modify filters in `firehose/data_filter.py`.
-   - Change database names in `firehose/database.py` and `web/database_ro.py` if desired.
-
-3. **Publish Your Feed:** Follow the [Publishing Your Feed](#publishing-your-feed) instructions below.
+2. **Publish Your Feed:** Follow the [Publishing Your Feed](#publishing-your-feed) instructions below.
 
 ## Publishing Your Feed
 
