@@ -1,59 +1,126 @@
-## Cosmere related ATProto Feed Generator powered by [The AT Protocol SDK for Python](https://github.com/MarshalX/atproto)
+# Cosmere ATProto Feed Generator
 
-> Feed Generators are services that provide custom algorithms to users through the AT Protocol.
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue.svg)
+![Flask](https://img.shields.io/badge/Flask-2.3.2-blue.svg)
+![Gunicorn](https://img.shields.io/badge/Gunicorn-20.1.0-blue.svg)
 
-Official overview (read it first): https://github.com/bluesky-social/feed-generator#overview
+## Overview
 
-### Getting Started
+**Cosmere ATProto Feed Generator** is a tailored feed service for fans of Brandon Sanderson's Cosmere universe, built using the [AT Protocol SDK for Python](https://github.com/MarshalX/atproto). It filters and combines trending and chronological posts related to the Cosmere, delivering a curated content stream to users.
 
-This simple server uses SQLite to store and query data. Data is cleaned and deleted after 3 days using `apscheduler` python package. It also hydrates the posts in the DB with an interaction score defined in `hydrate_posts_with_interactions()`. The interaction score is used in `algos/chrono_trending.py` to interleave trending posts into the chronological feed. The database code is in `firehose/database.py`.
+> **Credit:** This project builds upon the original Python feed generator by [@MarshalX](https://github.com/MarshalX).
 
-### Setup
+For more details, refer to the [Bluesky Social Feed Generator Overview](https://github.com/bluesky-social/feed-generator#overview).
 
-Install Python 3.7+, optionally create virtual environment.
+## Filters
 
-Install dependencies:
+The feed generator uses the following filters to curate content:
+
+- **Tokens:** `allomancy`, `bondsmith`, `cosmere`, `dalinar`, `dawnshard`, `dragonsteel`, `dustbringer`, `edgedancer`, `elantris`, `elsecaller`, `stormblessed`, `thaidakar`, `kholin`, `lightweaver`, `mistborn`, `oathbringer`, `sanderlanche`, `sazed`, `shadesmar`, `skybreaker`, `spren`, `stoneward`, `stormlight`, `surgebinding`, `truthwatcher`, `warbreaker`, `willshaper`, `windrunner`, `roshar`, `scadrial`, `taldain`, `voidbringer`, `shardblade`, `shardplate`, `shardbearer`, `feruchemy`, `hemalurgy`, `lerasium`, `atium`, `mistcloak`, `kandra`, `koloss`, `skaa`, `highstorm`, `parshendi`, `urithiru`, `honorblade`, `surgebinder`, `dawnshard`, `worldhopper`, `perpendicularity`, `adonalsium`, `chasmfiend`, `worldbringer`, `allomancer`, `highspren`, `elantrian`, `inkspren`, `honorspren`, `cultivationspren`, `peakspren`, `ashspren`, `luckspren`, `windspren`, `lifespren`, `towerlight`, `voidlight`, `brandosando`, `numuhukumakiaki'ialunamor`
+
+- **Inclusive Multi-Tokens:** `brandon sanderson`, `yumi sanderson`, `vin elend`, `yumi painter`, `shallan adolin`, `kaladin syl`, `kaladin adolin`, `kaladin shallan`, `navani kholin`, `shallan pattern`, `shallan veil`, `shallan radiant`, `vin kelsier`, `kelsier survivor`, `wax wayne marasi`, `steris marasi`, `cryptic spren`, `steris wax`, `szeth nightblood`, `shades threnody`, `threnody hell`
+
+- **Phrases:** `17th shard`, `bands of mourning`, `brandon sanderson`, `cognitive realm`, `rhythm of war`, `shadows of self`, `sixth of the dusk`, `shadows for silence`, `shadows of silence`, `ember dark`, `emperor's soul`, `isles of the ember dark`, `stormlight archive`, `sunlit man`, `alloy of law`, `hero of ages`, `lost metal`, `way of kings`, `well of ascension`, `tress of the emerald sea`, `wind and truth`, `words of radiance`, `yumi and the nightmare painter`, `shattered planes`, `knight radiant`, `knights radiant`, `journey before destination`, `life before death, strength before weakness`
+
+- **Handles to Include:** `stormlightmemes.bsky.social`, `brotherwisegames.bsky.social`
+
+## Features
+
+The generator offers custom filtering using SQLite and regular expressions to identify Cosmere-related content. It integrates trending posts by calculating interaction scores and maintains the database by cleaning outdated entries with `apscheduler`. Deployment is streamlined with `gunicorn` and managed using `honcho`.
+
+## Getting Started
+
+### Prerequisites
+
+Ensure you have **Python 3.7+** and **Conda** installed. [Download Miniconda](https://docs.conda.io/en/latest/miniconda.html) if you haven't already.
+
+### Installation
+
+Clone the repository and navigate to its directory:
+
+```shell
+git clone https://github.com/yourusername/cosmere-feed-generator.git
+cd cosmere-feed-generator
+```
+
+Create and activate a Conda environment:
+
+```shell
+conda create --name cosmere-feed python=3.9
+conda activate cosmere-feed
+```
+
+Install the required dependencies:
+
 ```shell
 pip install -r requirements.txt
 ```
 
-Copy `.env.example` as `.env`. Fill the variables.
+Configure the environment variables by copying and editing the example file:
 
-> **Note**
-> To get value for "CHRONO_TRENDING_URI" you should publish the feed first. 
+```shell
+cp example.env .env
+```
 
-### Cloning my Cosmere Feed
+Open `.env` in your preferred text editor and fill in the necessary variables.  
+> **Note:** To obtain `CHRONO_TRENDING_URI`, publish the feed first using `publish_feed.py`.
 
-If you want to clone to create your own feed, you will need to do a few things:
-1. Install dependecies, fill in `example.env` and rename it to `.env`. Then, update top variables in `publish_feed.py`.
-1. Change data filter tokens, phrases, account handles, and multi-tokens in `firehose/data_filter.py`.
-2. Change database file name is `firehose/database.py` and `web/database_ro.py`. DB file auto-created if not exists.
-3. Publish your feed (instructions below).
+## Cloning the Cosmere Feed
 
-This server uses a did:web identifier. However, you're free to switch this out for did:plc if you like - you may want to if you expect this Feed Generator to be long-standing and possibly migrating domains.
+To create your own feed, install dependencies, configure environment variables, and customize the settings:
 
-### Publishing your feed
+1. **Install Dependencies and Configure:**
 
-To publish your feed, go to the script at `publish_feed.py` and change the variables from my cosmere feed. To publish your feed generator, simply run `python publish_feed.py`. To update your feed's display data (name, avatar, description, etc.), just update the relevant variables and re-run the script.
+    ```shell
+    pip install -r requirements.txt
+    cp example.env .env
+    ```
 
-After successfully running the script, you should be able to see your feed from within the app, as well as share it by embedding a link in a post (similar to a quote post).
+2. **Customize Settings:**
+   - Update `publish_feed.py` with your details.
+   - Modify filters in `firehose/data_filter.py`.
+   - Change database names in `firehose/database.py` and `web/database_ro.py` if desired.
 
-### Running the Server
+3. **Publish Your Feed:** Follow the [Publishing Your Feed](#publishing-your-feed) instructions below.
 
-WSGI compatibility:
-- uses `gunicorn` as the WSGI server for `/web/app.py` (web server)
-- firehose is a seperate process done in `/firehose` and started with `start_stream.py` (firhose process)
+## Publishing Your Feed
 
-Run server using `honcho`:
+Edit the `publish_feed.py` script with your specific information such as `HANDLE`, `PASSWORD`, `HOSTNAME`, `RECORD_NAME`, `DISPLAY_NAME`, `DESCRIPTION`, and `AVATAR_PATH`. Run the script to publish your feed:
+
+```shell
+python publish_feed.py
+```
+
+To update your feed's display data, modify the relevant variables and rerun the script. After successful publication, access your feed via the Bluesky app and share the provided link as needed.
+
+## Running the Server
+
+The server operates two main processes: the web server and the firehose data stream. Use `honcho` to manage these processes as defined in the `Procfile`:
+
 ```shell
 honcho start
 ```
 
-Endpoints:
-- /.well-known/did.json
-- /xrpc/app.bsky.feed.describeFeedGenerator
-- /xrpc/app.bsky.feed.getFeedSkeleton
+This command will initiate both the `gunicorn` web server and the `start_stream.py` firehose process.
 
-### License
+## Endpoints
 
-MIT
+The server provides the following endpoints:
+
+- **Well-Known DID Document:** `GET /.well-known/did.json`
+- **Feed Generator Description:** `GET /xrpc/app.bsky.feed.describeFeedGenerator`
+- **Feed Skeleton:** `GET /xrpc/app.bsky.feed.getFeedSkeleton`
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+## Acknowledgements
+
+Special thanks to [@MarshalX](https://github.com/MarshalX) for the foundational work on the AT Protocol SDK for Python, [Bluesky Social](https://atproto.com/) for the AT Protocol, and Brandon Sanderson for creating the inspiring Cosmere universe.
+
+## Banned Content
+- **Handles to Exclude:** `flintds.bsky.social`
+
+- **Exclude Tokens:** `trump`, `sylvana`, `sylvanna`, `alleria`, `uriele`, `mormon`

@@ -5,6 +5,7 @@
 *.db
 *.db-wal
 *.db-shm
+output.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
