@@ -3,7 +3,7 @@ import re
 from collections import defaultdict
 from atproto import models, Client, IdResolver
 from utils.logger import logger
-from firehose.database import db, Post
+from firehose.database import db, Post, init_client
 
 PHRASES = [
     '17th shard',
@@ -141,9 +141,6 @@ EXCLUDE_TOKENS = [
     'mormon',
 ]
 
-# Compile regex patterns
-
-# Helper function to escape and join phrases/tokens
 def compile_pattern(items, word_boundary=True, optional_prefix=None, plural=False):
     escaped = [re.escape(item) for item in items]
     if plural:
