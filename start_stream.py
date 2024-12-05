@@ -22,7 +22,8 @@ def main():
         data_stream.run(config.SERVICE_DID, operations_callback, stream_stop_event)
     except Exception as e:
         logger.error(f"An exception occurred in the firehose: {e}")
-        sys.exit(1)
+        # try to restart the stream
+        main()
 
 if __name__ == '__main__':
     main()

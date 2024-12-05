@@ -131,7 +131,10 @@ TOKENS = [
     'voidlight',
     'brandosando',
     'numuhukumakiaki\'ialunamor',
-    'dsnx24'
+    'dsnx24',
+    'dsnx2024',
+    'dragonsteelnexus',
+    'dragonsteelnexus2024'
 ]
 
 EXCLUDE_TOKENS = [
