@@ -34,6 +34,7 @@ PHRASES = [
     'knights radiant',
     'journey before destination',
     'life before death, strength before weakness',
+    'dragon steel nexus',
 ]
 
 INCLUSIVE_MULTI_TOKENS = [
@@ -130,6 +131,7 @@ TOKENS = [
     'voidlight',
     'brandosando',
     'numuhukumakiaki\'ialunamor',
+    'dsnx24'
 ]
 
 EXCLUDE_TOKENS = [
