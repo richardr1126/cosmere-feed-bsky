@@ -15,7 +15,7 @@
 
 - The generator offers custom filtering using SQLite and regular expressions to identify Cosmere-related content.
 - It integrates trending posts by calculating interaction scores and maintains the database by cleaning outdated entries with `apscheduler`.
-- Deployment is streamlined with `gunicorn` (2 workers) and managed using `honcho` (see Procfile) to run `web` (with 2 workers) seperatly from `firehose` data stream.
+- Deployment is streamlined with `gunicorn` and managed using `honcho` (see Procfile) to run `web` seperatly from `firehose` data stream.
 - Will run on **0.5 CPU**, **0.5 GB RAM**.
 > **Note:** Posts are only kept for 3 days, and trending posts are calculated based on interactions within the last 24 hours.
 
