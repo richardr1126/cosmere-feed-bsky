@@ -18,12 +18,12 @@ def main():
     for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGHUP]:
         signal.signal(sig, handle_termination)
 
-    try:
-        data_stream.run(config.SERVICE_DID, operations_callback, stream_stop_event)
-    except Exception as e:
-        logger.error(f"An exception occurred in the firehose: {e}")
-        # try to restart the stream
-        main()
+    while not stream_stop_event.is_set():
+        try:
+            data_stream.run(config.SERVICE_DID, operations_callback, stream_stop_event)
+        except Exception as e:
+            logger.error(f"An exception occurred in the firehose: {e}")
+            logger.info("Restarting the firehose stream...")
 
 if __name__ == '__main__':
     main()
