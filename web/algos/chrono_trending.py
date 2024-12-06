@@ -106,7 +106,7 @@ def handler(cursor: Optional[str], limit: int) -> dict:
 
         # Apply offset for trending_posts
         trending_posts = list(trending_posts_query.offset(trending_posts_offset).limit(limit))
-        logger.info(f"Fetched {len(trending_posts)} trending posts with >={INTERACTIONS_THRESHOLD} interactions starting at offset {trending_posts_offset}")
+        #logger.info(f"Fetched {len(trending_posts)} trending posts with >={INTERACTIONS_THRESHOLD} interactions starting at offset {trending_posts_offset}")
 
         trending_cids = [post.cid for post in trending_posts]
 
@@ -132,7 +132,7 @@ def handler(cursor: Optional[str], limit: int) -> dict:
             }
 
         main_posts = list(main_posts_query.limit(limit))  # Fetch up to 'limit' main posts
-        logger.debug(f"Fetched {len(main_posts)} main posts excluding trending posts")
+        #logger.debug(f"Fetched {len(main_posts)} main posts excluding trending posts")
 
         # Fetch my_posts excluding trending_posts
         my_posts_query = (
@@ -152,7 +152,7 @@ def handler(cursor: Optional[str], limit: int) -> dict:
             my_posts_query = my_posts_query.where(Post.cid.not_in(trending_cids))
 
         my_posts = list(my_posts_query.limit(limit))  # Fetch up to 'limit' my posts
-        logger.debug(f"Fetched {len(my_posts)} my posts excluding trending posts")
+        #logger.debug(f"Fetched {len(my_posts)} my posts excluding trending posts")
 
         # Initialize iterators
         my_posts_iter = iter(my_posts)
@@ -194,7 +194,7 @@ def handler(cursor: Optional[str], limit: int) -> dict:
                             last_fetched[category] = post
 
                             if category == 'trending_posts': # Track the number of trending_posts fetched
-                                logger.info(f"Added trending post | {post.interactions} | {post.indexed_at}")
+                                #logger.info(f"Added trending post | {post.interactions} | {post.indexed_at}")
                                 trending_count += 1
 
                             if len(combined_posts) >= limit:
@@ -220,7 +220,7 @@ def handler(cursor: Optional[str], limit: int) -> dict:
                 logger.debug("No more main_posts to add during final filling")
                 break
 
-        logger.debug(f"Combined posts count after interleaving: {len(combined_posts)}")
+        #logger.debug(f"Combined posts count after interleaving: {len(combined_posts)}")
 
         # Trim the list to the desired limit
         combined_posts = combined_posts[:limit]
@@ -236,6 +236,7 @@ def handler(cursor: Optional[str], limit: int) -> dict:
                 break
 
         logger.info(f"Total unique posts in feed after deduplication: {len(unique_posts)}")
+        logger.info(f"Total trending posts in served: {trending_count}")
 
         # Build the feed
         feed = [{'post': post.uri} for post in unique_posts]
