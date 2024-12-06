@@ -156,7 +156,7 @@ def _run(name, operations_callback, stream_stop_event=None):
             # Update the client's parameters with the new cursor
             client.update_params(models.ComAtprotoSyncSubscribeRepos.Params(cursor=commit.seq))
             # Persist the new cursor in the database
-            SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
+            #SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
 
         if not commit.blocks:
             # Skip if there are no blocks to process
