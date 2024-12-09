@@ -80,6 +80,7 @@ To create your own feed, install dependencies, configure environment variables, 
    - Update `publish_feed.py` with your details. **(REQUIRED)**
    - Modify filters in `firehose/data_filter.py`. **(OPTIONAL)**
    - Change database routes in `firehose/database.py` and `web/database_ro.py`. **(REQUIRED for production)**
+   - Change `DID_TO_PRIORITIZE` in `algos/chrono_trending.py` with a bsky DID which will show it's posts at the top of the feed **(REQUIRED)**
    > **Note:** Because current DB folder for production `/var/data` might not be accessible in your environment.
 
 2. **Publish Your Feed:** Follow the [Publishing Your Feed](#publishing-your-feed) instructions below.
