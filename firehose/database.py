@@ -318,17 +318,17 @@ def init_client() -> Client:
 
     # Attempt to load existing session from the database
     session_string = get_session()
-    # if session_string:
-    #     try:
-    #         client.login(session_string=session_string)
-    #         logger.info("Reused existing session from the database.")
-    #     except exceptions.AtProtocolError as e:
-    #         logger.error(f"Failed to login with existing session: {e}")
-    #         logger.info("Attempting to create a new session.")
-    #         client.login(HANDLE, PASSWORD)
-    # else:
-    logger.info("No existing session found in the database. Creating a new session.")
-    client.login(HANDLE, PASSWORD)
+    if session_string:
+        try:
+            client.login(session_string=session_string)
+            logger.info("Reused existing session from the database.")
+        except exceptions.AtProtocolError as e:
+            logger.error(f"Failed to login with existing session: {e}")
+            logger.info("Attempting to create a new session.")
+            client.login(HANDLE, PASSWORD)
+    else:
+        logger.info("No existing session found in the database. Creating a new session.")
+        client.login(HANDLE, PASSWORD)
 
     return client
 
