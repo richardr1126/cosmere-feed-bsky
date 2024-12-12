@@ -1,4 +1,5 @@
 import os
+from utils.logger import logger
 
 SERVICE_DID = os.environ.get('SERVICE_DID', None)
 HOSTNAME = os.environ.get('HOSTNAME', None)
@@ -16,3 +17,11 @@ CHRONOLOGICAL_TRENDING_URI = os.environ.get('CHRONOLOGICAL_TRENDING_URI')
 if CHRONOLOGICAL_TRENDING_URI is None:
     raise RuntimeError('Publish your feed first (run publish_feed.py) to obtain Feed URI. '
                        'Set this URI to "CHRONOLOGICAL_TRENDING_URI" environment variable.')
+
+# logger.info(f'HANDLE: {HANDLE}')
+# logger.info(f'PASSWORD: {PASSWORD}')
+if HANDLE is None:
+    raise RuntimeError('You should set "HANDLE" environment variable first.')
+
+if PASSWORD is None:
+    raise RuntimeError('You should set "PASSWORD" environment variable first.')

@@ -36,13 +36,39 @@ The feed generator uses the following filters to curate content:
 
 The generator offers custom filtering using SQLite and regular expressions to identify Cosmere-related content. It integrates trending posts by calculating interaction scores and maintains the database by cleaning outdated entries with `apscheduler`. Deployment is streamlined with `gunicorn` and managed using `honcho`.
 
-## Getting Started
+## Making your own Feed
 
-### Prerequisites
+1. **Update files:**
+   - Update `publish_feed.py` with your feed details. **(REQUIRED)**
+   - Modify filters in `firehose/data_filter.py`. **(OPTIONAL)**
+   - Change database names/routes in `firehose/database.py` and `web/database_ro.py`. **(REQUIRED (unless using Docker))**
+   > **Note:** Currently `/var/data/` is used for database storage in a Docker volume. Change this to a different path if needed.
+
+2. **Publish Your Feed:** Follow the [Publishing Your Feed](#publishing-your-feed) instructions below.
+
+## Easiest installation (Docker)
+
+Configure the environment variables by copying and editing the example file:
+
+```shell
+cp example.env .env
+```
+
+Open `.env` in your preferred text editor and fill in the necessary variables.  
+> **Note:** To obtain `CHRONO_TRENDING_URI`, publish the feed first using `publish_feed.py`.
+
+Build and run Docker image:
+```shell
+docker build -t myfeed .
+docker run --rm -it --env-file .env -p 8000:8000 -v feeddata:/var/data/ myfeed
+```
+
+
+### Manual Installation
 
 Ensure you have **Python 3.7+** and **Conda** installed. [Download Miniconda](https://docs.conda.io/en/latest/miniconda.html) if you haven't already.
 
-### Installation
+### Prerequisites
 
 Clone the repository and navigate to its directory:
 
@@ -64,28 +90,6 @@ Install the required dependencies:
 pip install -r requirements.txt
 ```
 
-Configure the environment variables by copying and editing the example file:
-
-```shell
-cp example.env .env
-```
-
-Open `.env` in your preferred text editor and fill in the necessary variables.  
-> **Note:** To obtain `CHRONO_TRENDING_URI`, publish the feed first using `publish_feed.py`.
-
-## Making your own Feed
-
-To create your own feed, install dependencies, configure environment variables, and customize the settings:
-
-1. **Update files:**
-   - Update `publish_feed.py` with your details. **(REQUIRED)**
-   - Modify filters in `firehose/data_filter.py`. **(OPTIONAL)**
-   - Change database names/routes in `firehose/database.py` and `web/database_ro.py`. **(REQUIRED)**
-   - Change `DID_TO_PRIORITIZE` in `algos/chrono_trending.py` with a bsky DID which will show it's posts at the top of the feed **(REQUIRED)**
-   > **Note:** Because current DB folder for production `/var/data` might not be accessible in your environment.
-
-2. **Publish Your Feed:** Follow the [Publishing Your Feed](#publishing-your-feed) instructions below.
-
 ## Publishing Your Feed
 
 Edit the `publish_feed.py` script with your specific information such as `HANDLE`, `PASSWORD`, `HOSTNAME`, `RECORD_NAME`, `DISPLAY_NAME`, `DESCRIPTION`, and `AVATAR_PATH`. Run the script to publish your feed:
@@ -99,12 +103,6 @@ To update your feed's display data, modify the relevant variables and rerun the 
 ## Running the Server
 
 The server operates two main processes: the web server and the firehose data stream. Use `honcho` to manage these processes as defined in the `Procfile`:
-
-Build and run Docker image:
-```shell
-docker build -t myfeed .
-docker run --rm -it -p 8000:8000 -v feeddata:/var/data/ myfeed
-```
 
 Manually run the server:
 ```shell

@@ -1,7 +1,7 @@
-atproto==0.0.53
-peewee~=3.16.2
-Flask~=2.3.2
-python-dotenv~=1.0.0
-gunicorn~=20.1.0
+atproto
+peewee
+Flask
+python-dotenv
+gunicorn
 honcho
 apscheduler

@@ -9,6 +9,7 @@ from utils.logger import logger
 uri = config.CHRONOLOGICAL_TRENDING_URI
 CURSOR_EOF = 'eof'
 
+DID_TO_PRIORITIZE = 'did:plc:wihwdzwkb6nd3wb565kujg2f'
 TRENDING_THRESHOLD = 24  # Hours
 INTERACTIONS_THRESHOLD = 30  # Minimum hot score for trending posts
 
@@ -18,8 +19,8 @@ def encode_cursor(cursors: Dict[str, Optional[str]]) -> str:
 def decode_cursor(cursor: str) -> Dict[str, Optional[str]]:
     return json.loads(cursor)
 
-def adjust_limit(limit: int, posts_per_iteration: int) -> int:
-    # Validate and adjust 'limit' to the closest multiple of posts_per_iteration
+def adjust_limit(limit: int) -> int:
+    # Validate and adjust 'limit' to the closest multiple of 5
     if limit <= 0:
         logger.error(f"Invalid limit value: {limit}. Must be positive.")
         return {
@@ -28,10 +29,10 @@ def adjust_limit(limit: int, posts_per_iteration: int) -> int:
             'error': 'Limit must be a positive integer.'
         }
     
-    # Adjust limit to the closest multiple of posts_per_iteration
-    if limit % posts_per_iteration != 0:
-        limit = (limit // posts_per_iteration + 1) * posts_per_iteration
-        logger.debug(f"Adjusted limit to the closest multiple of {posts_per_iteration}: {limit}")
+    # Adjust limit to the closest multiple of 5
+    if limit % 5 != 0:
+        limit = (limit // 5 + 1) * 5
+        logger.debug(f"Adjusted limit to the closest multiple of 5: {limit}")
 
     return limit
 
@@ -39,34 +40,30 @@ def handler(cursor: Optional[str], limit: int) -> dict:
     if not isinstance(limit, int):
         limit = int(limit)
 
+    # Adjust limit to the closest multiple of 5
+    limit = adjust_limit(limit) if limit != 1 else 1
+
     try:
         # Define time thresholds
         now = datetime.now(timezone.utc)
+        my_posts_threshold = now - timedelta(hours=12)
         trending_threshold = now - timedelta(hours=TRENDING_THRESHOLD)
 
         # Define interleaving pattern
         pattern = [
-            ('main_posts', 2),
+            ('my_posts', 1),
+            ('main_posts', 3),
             ('trending_posts', 1)
         ]
-        posts_per_loop = sum([count for _, count in pattern])
 
-        # Special case for limit 10
-        if limit == 10:
-            pattern = [
-                ('trending_posts', 1),
-            ]
-            posts_per_loop = 1
-
-        # Adjust limit to the closest multiple of 5
-        limit = adjust_limit(limit, posts_per_loop) if limit != 1 else 1
         # Calculate total number of pattern repeats needed
-        total_patterns = limit // posts_per_loop  if limit != 1 else 1
+        total_patterns = limit // 5  if limit != 1 else 1
 
         # Initialize cursors for each post type
         if cursor and cursor != CURSOR_EOF:
             try:
                 cursors = decode_cursor(cursor)
+                my_cursor = cursors.get('my_posts')
                 main_cursor = cursors.get('main_posts')
                 trending_posts_offset = int(cursors.get('trending_posts_offset', 0))
             except (ValueError, json.JSONDecodeError) as e:
@@ -78,10 +75,11 @@ def handler(cursor: Optional[str], limit: int) -> dict:
                 }
         else:
             cursors = {}
+            my_cursor = None
             main_cursor = None
             trending_posts_offset = 0  # Start at the beginning
 
-        # Helper function to build cursor conditions for main_posts
+        # Helper function to build cursor conditions for my_posts and main_posts
         def build_cursor_condition(cursor_value: Optional[str]):
             if cursor_value:
                 try:
@@ -108,13 +106,14 @@ def handler(cursor: Optional[str], limit: int) -> dict:
 
         # Apply offset for trending_posts
         trending_posts = list(trending_posts_query.offset(trending_posts_offset).limit(limit))
-        logger.info(f"Fetched {len(trending_posts)} trending posts with >={INTERACTIONS_THRESHOLD} interactions starting at offset {trending_posts_offset}")
+        #logger.info(f"Fetched {len(trending_posts)} trending posts with >={INTERACTIONS_THRESHOLD} interactions starting at offset {trending_posts_offset}")
 
         trending_cids = [post.cid for post in trending_posts]
 
         # Fetch main_posts excluding trending_posts
         main_posts_query = (
             Post.select()
+            .where(Post.author != DID_TO_PRIORITIZE)
             .order_by(Post.indexed_at.desc(), Post.cid.desc())
         )
 
@@ -135,7 +134,28 @@ def handler(cursor: Optional[str], limit: int) -> dict:
         main_posts = list(main_posts_query.limit(limit))  # Fetch up to 'limit' main posts
         #logger.debug(f"Fetched {len(main_posts)} main posts excluding trending posts")
 
+        # Fetch my_posts excluding trending_posts
+        my_posts_query = (
+            Post.select()
+            .where(
+                (Post.author == DID_TO_PRIORITIZE) &
+                (Post.indexed_at > my_posts_threshold)
+            )
+            .order_by(Post.indexed_at.desc(), Post.cid.desc())
+        )
+
+        my_cursor_condition = build_cursor_condition(my_cursor)
+        if my_cursor_condition:
+            my_posts_query = my_posts_query.where(my_cursor_condition)
+
+        if trending_cids:
+            my_posts_query = my_posts_query.where(Post.cid.not_in(trending_cids))
+
+        my_posts = list(my_posts_query.limit(limit))  # Fetch up to 'limit' my posts
+        #logger.debug(f"Fetched {len(my_posts)} my posts excluding trending posts")
+
         # Initialize iterators
+        my_posts_iter = iter(my_posts)
         main_posts_iter = iter(main_posts)
         trending_posts_iter = iter(trending_posts)
 
@@ -144,6 +164,7 @@ def handler(cursor: Optional[str], limit: int) -> dict:
 
         # Track the last fetched post per category
         last_fetched = {
+            'my_posts': None,
             'main_posts': None,
             'trending_posts': None
         }
@@ -155,7 +176,12 @@ def handler(cursor: Optional[str], limit: int) -> dict:
             for category, count in pattern:
                 for _ in range(count):
                     try:
-                        if category == 'main_posts':
+                        if limit == 10: # Limit 10 when reuests come from following feed
+                            category = 'trending_posts'
+
+                        if category == 'my_posts':
+                            post = next(my_posts_iter)
+                        elif category == 'main_posts':
                             post = next(main_posts_iter)
                         elif category == 'trending_posts':
                             post = next(trending_posts_iter)
@@ -217,7 +243,7 @@ def handler(cursor: Optional[str], limit: int) -> dict:
 
         new_cursors = {}
         for category, post in last_fetched.items():
-            if category == 'main_posts' and post:
+            if category in ['my_posts', 'main_posts'] and post:
                 # Corrected multiplication by using timestamp()
                 timestamp = datetime.fromisoformat(str(post.indexed_at)).timestamp()*1000
                 new_cursors[category] = f'{timestamp}::{post.cid}'
@@ -237,8 +263,9 @@ def handler(cursor: Optional[str], limit: int) -> dict:
 
         more_trending = len(trending_posts) == limit  # If fetched 'limit' trending_posts, assume more exist
         more_main = has_more_posts(main_posts_query, 1)
+        more_my = has_more_posts(my_posts_query, 1)
 
-        if not (more_trending or more_main):
+        if not (more_trending or more_main or more_my):
             new_cursor = CURSOR_EOF
 
         logger.info(f"Next cursor set to: {new_cursor}")
