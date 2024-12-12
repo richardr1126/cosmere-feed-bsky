@@ -1,9 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from utils.logger import logger
-from utils.config import DEV_MODE
 import peewee
 
-file = 'file:/var/data/new_cosmere_feed.db?mode=ro' if not DEV_MODE else 'file:./new_cosmere_feed.db?mode=ro'
+file = 'file:/var/data/new_cosmere_feed.db?mode=ro'
 
 # Configure the read-only SQLite database connection using URI
 db = peewee.SqliteDatabase(

@@ -1,5 +1,6 @@
 # Cosmere ATProto Feed Generator Flask Server
 
+![Docker](https://img.shields.io/docker/image-size/richardr1126/cosmere-feed-bsky/latest)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue.svg)
 ![Flask](https://img.shields.io/badge/Flask-2.3.2-blue.svg)
@@ -79,7 +80,7 @@ To create your own feed, install dependencies, configure environment variables, 
 1. **Update files:**
    - Update `publish_feed.py` with your details. **(REQUIRED)**
    - Modify filters in `firehose/data_filter.py`. **(OPTIONAL)**
-   - Change database routes in `firehose/database.py` and `web/database_ro.py`. **(REQUIRED for production)**
+   - Change database names/routes in `firehose/database.py` and `web/database_ro.py`. **(REQUIRED)**
    - Change `DID_TO_PRIORITIZE` in `algos/chrono_trending.py` with a bsky DID which will show it's posts at the top of the feed **(REQUIRED)**
    > **Note:** Because current DB folder for production `/var/data` might not be accessible in your environment.
 
@@ -99,6 +100,13 @@ To update your feed's display data, modify the relevant variables and rerun the 
 
 The server operates two main processes: the web server and the firehose data stream. Use `honcho` to manage these processes as defined in the `Procfile`:
 
+Build and run Docker image:
+```shell
+docker build -t myfeed .
+docker run --rm -it -p 8000:8000 -v feeddata:/var/data/ myfeed
+```
+
+Manually run the server:
 ```shell
 honcho start
 ```

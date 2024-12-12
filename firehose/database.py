@@ -2,25 +2,23 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 import logging
 import shutil
-import signal
-import sys
 
 from utils.logger import logger  # Ensure this is correctly implemented
-from utils.config import DEV_MODE, HANDLE, PASSWORD  # Ensure these are set in your config
+from utils.config import HANDLE, PASSWORD  # Ensure these are set in your config
 import peewee
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.base import JobLookupError
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
-from atproto import Client, IdResolver, SessionEvent, Session, exceptions
+from atproto import Client, SessionEvent, Session, exceptions
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Database setup
-file = '/var/data/new_cosmere_feed.db' if not DEV_MODE else 'new_cosmere_feed.db'
+file = '/var/data/new_cosmere_feed.db'
 db = peewee.SqliteDatabase(file, timeout=60, pragmas={
     'journal_mode': 'wal',
     'cache_size': -1024 * 256,
