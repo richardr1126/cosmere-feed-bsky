@@ -39,6 +39,13 @@ def handler(cursor: Optional[str], limit: int) -> dict:
     if not isinstance(limit, int):
         limit = int(limit)
 
+    if limit == 1:
+        logger.info("Returning a single main post for limit 1")
+        return {
+            'cursor': CURSOR_EOF,
+            'feed': [{'post': Post.select().order_by(Post.indexed_at.desc(), Post.cid.desc()).first().uri}]
+        }
+
     try:
         # Define time thresholds
         now = datetime.now(timezone.utc)
@@ -125,12 +132,6 @@ def handler(cursor: Optional[str], limit: int) -> dict:
         if trending_cids:
             main_posts_query = main_posts_query.where(Post.cid.not_in(trending_cids))
 
-        if limit == 1:
-            main_posts_query = main_posts_query.limit(1)
-            return {
-                'cursor': CURSOR_EOF,
-                'feed': [{'post': main_posts_query[0].uri}]
-            }
 
         main_posts = list(main_posts_query.limit(limit))  # Fetch up to 'limit' main posts
         #logger.debug(f"Fetched {len(main_posts)} main posts excluding trending posts")
