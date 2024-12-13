@@ -59,7 +59,7 @@ Open `.env` in your preferred text editor and fill in the necessary variables.
 
 Build and run Docker image:
 ```shell
-docker build -t myfeed .
+docker build --rm -t myfeed .
 docker run --rm -it --env-file .env -p 8000:8000 -v feeddata:/var/data/ myfeed
 ```
 

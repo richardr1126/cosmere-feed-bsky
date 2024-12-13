@@ -41,9 +41,7 @@ def describe_feed_generator():
 @app.route('/xrpc/app.bsky.feed.getFeedSkeleton', methods=['GET'])
 def get_feed_skeleton():
     feed = request.args.get('feed', default=None, type=str)
-    logger.info(f'Feed: {feed}')
     algo = algos.get(feed)
-    logger.info(f'Algos: {algos}')
     if not algo:
         return 'Unsupported algorithm', 400
 
