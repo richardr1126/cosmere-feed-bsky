@@ -134,7 +134,7 @@ def _run(name, operations_callback, stream_stop_event=None):
         """
         # Check if a stop event has been set; if so, stop the client
         if stream_stop_event and stream_stop_event.is_set():
-            logger.warning("Stopping data stream client...")
+            logger.info("Stopping firehose...")
             client.stop()
             return
 
