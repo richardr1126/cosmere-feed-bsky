@@ -1,0 +1,16 @@
+services:
+  app:
+    image: richardr1126/cosmere-feed-bsky
+    build:
+      context: .
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - feeddata:/var/data
+    stdin_open: true
+    tty: true
+
+volumes:
+  feeddata:

@@ -57,6 +57,11 @@ cp example.env .env
 Open `.env` in your preferred text editor and fill in the necessary variables.  
 > **Note:** To obtain `CHRONO_TRENDING_URI`, publish the feed first using `publish_feed.py`.
 
+Using docker-compose:
+```shell
+docker compose up --build --remove-orphans
+```
+
 Build and run Docker image:
 ```shell
 docker build --rm -t myfeed .
