@@ -10,7 +10,7 @@ from atproto import (
 )
 from atproto.exceptions import FirehoseError
 
-from firehose.database import SubscriptionState, db
+from database import SubscriptionState, db
 from utils.logger import logger
 
 # Define the types of records we're interested in and their corresponding namespace IDs
@@ -123,7 +123,7 @@ def _run(name, operations_callback, stream_stop_event=None):
         SubscriptionState.create(service=name, cursor=0)
 
     # Initialize the firehose client w/o a cursor for now
-    client = FirehoseSubscribeReposClient(params)
+    client = FirehoseSubscribeReposClient()
 
     def on_message_handler(message: firehose_models.MessageFrame) -> None:
         """
@@ -156,10 +156,10 @@ def _run(name, operations_callback, stream_stop_event=None):
             # Update the client's parameters with the new cursor
             client.update_params(models.ComAtprotoSyncSubscribeRepos.Params(cursor=commit.seq))
             # Persist the new cursor in the database
-            try:
-                SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
-            except Exception as e:
-                logger.error(f"Failed to update cursor in database: {e}")
+            # try:
+            #     SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
+            # except Exception as e:
+            #     logger.error(f"Failed to update cursor in database: {e}")
 
         if not commit.blocks:
             # Skip if there are no blocks to process

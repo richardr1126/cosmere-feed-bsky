@@ -1,6 +1,19 @@
 services:
-  app:
-    image: richardr1126/cosmere-feed-bsky
+  firehose:
+    container_name: firehose
+    image: richardr1126/firehose
+    build:
+      context: ./firehose
+    env_file:
+      - .env
+    volumes:
+      - feeddata:/var/data
+    stdin_open: true
+    tty: true
+
+  web:
+    container_name: web
+    image: richardr1126/cosmere-feed
     build:
       context: .
     env_file:

@@ -3,7 +3,7 @@ import re
 from collections import defaultdict
 from atproto import models, Client, IdResolver
 from utils.logger import logger
-from firehose.database import db, Post, init_client
+from database import db, Post, init_client
 
 PHRASES = [
     '17th shard',

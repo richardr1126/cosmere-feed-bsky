@@ -4,8 +4,8 @@ import signal
 
 from utils import config
 from utils.logger import logger
-import firehose.data_stream as data_stream
-from firehose.data_filter import operations_callback
+import data_stream as data_stream
+from data_filter import operations_callback
 
 def main():
     stream_stop_event = threading.Event()
