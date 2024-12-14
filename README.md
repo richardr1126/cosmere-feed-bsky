@@ -1,4 +1,4 @@
-# Cosmere ATProto Feed Generator Flask Server
+# Cosmere ATProto Feed Generator PostgreSQL Server
 
 ![Docker](https://img.shields.io/docker/image-size/richardr1126/cosmere-feed-bsky/latest)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
@@ -14,11 +14,11 @@
 
 ## Features
 
-- The generator offers custom filtering using SQLite and regular expressions to identify Cosmere-related content.
+- The generator offers custom filtering using PostgreSQL and regular expressions to identify Cosmere-related content.
 - It integrates trending posts by calculating interaction scores and maintains the database by cleaning outdated entries with `apscheduler`.
-- Deployment is streamlined with `gunicorn` and managed using `honcho` (see Procfile) to run `web` seperatly from `firehose` data stream.
-- Will run on **0.5 CPU**, **0.5 GB RAM**.
-> **Note:** Posts are only kept for 3 days, and trending posts are calculated based on interactions within the last 24 hours.
+- Deployment is streamlined with Docker Compose to run the `web`, `firehose`, and `postgres` services.
+- Uses Docker compose to run the `web`, `firehose`, and `postgres` services.
+> **Note:** Posts are only kept for 30 days, and trending posts are calculated based on interactions within the last 24 hours.
 
 ## Filters
 
@@ -32,89 +32,53 @@ The feed generator uses the following filters to curate content:
 
 - **Handles to Include:** `stormlightmemes.bsky.social`, `brotherwisegames.bsky.social`
 
-## Features
-
-The generator offers custom filtering using SQLite and regular expressions to identify Cosmere-related content. It integrates trending posts by calculating interaction scores and maintains the database by cleaning outdated entries with `apscheduler`. Deployment is streamlined with `gunicorn` and managed using `honcho`.
-
 ## Making your own Feed
 
 1. **Update files:**
    - Update `publish_feed.py` with your feed details. **(REQUIRED)**
    - Modify filters in `firehose/data_filter.py`. **(OPTIONAL)**
-   - Change database names/routes in `firehose/database.py` and `web/database_ro.py`. **(REQUIRED (unless using Docker))**
-   > **Note:** Currently `/var/data/` is used for database storage in a Docker volume. Change this to a different path if needed.
+   - Update environment variables in `.env`. **(REQUIRED)**
 
 2. **Publish Your Feed:** Follow the [Publishing Your Feed](#publishing-your-feed) instructions below.
 
-## Easiest installation (Docker)
-
-Configure the environment variables by copying and editing the example file:
-
-```shell
-cp example.env .env
-```
-
-Open `.env` in your preferred text editor and fill in the necessary variables.  
-> **Note:** To obtain `CHRONO_TRENDING_URI`, publish the feed first using `publish_feed.py`.
-
-Using docker-compose:
-```shell
-docker compose up --build --remove-orphans
-```
-
-Build and run Docker image:
-```shell
-docker build --rm -t myfeed .
-docker run --rm -it --env-file .env -p 8000:8000 -v feeddata:/var/data/ myfeed
-```
-
-
-### Manual Installation
-
-Ensure you have **Python 3.7+** and **Conda** installed. [Download Miniconda](https://docs.conda.io/en/latest/miniconda.html) if you haven't already.
-
-### Prerequisites
-
-Clone the repository and navigate to its directory:
-
-```shell
-git clone https://github.com/yourusername/cosmere-feed-generator.git
-cd cosmere-feed-generator
-```
-
-Create and activate a Conda environment:
-
-```shell
-conda create --name cosmere-feed
-conda activate cosmere-feed
-```
-
-Install the required dependencies:
-
-```shell
-pip install -r requirements.txt
-```
-
 ## Publishing Your Feed
 
-Edit the `publish_feed.py` script with your specific information such as `HANDLE`, `PASSWORD`, `HOSTNAME`, `RECORD_NAME`, `DISPLAY_NAME`, `DESCRIPTION`, and `AVATAR_PATH`. Run the script to publish your feed:
+Edit publish_feed.py with your feed details and run:
 
 ```shell
 python publish_feed.py
 ```
 
-To update your feed's display data, modify the relevant variables and rerun the script. After successful publication, access your feed via the Bluesky app and share the provided link as needed.
+After successful publication, your feed will appear in the Bluesky app. Obtain the CHRONOLOGICAL_TRENDING_URI for the .env file from the output.
 
-## Running the Server
+## Installation with Docker Compose
 
-The server operates two main processes: the web server and the firehose data stream. Use `honcho` to manage these processes as defined in the `Procfile`:
-
-Manually run the server:
+1. Configure environment variables:
 ```shell
-honcho start
+cp example.env .env
 ```
 
-This command will initiate both the `gunicorn` web server and the `start_stream.py` firehose process.
+2. Edit .env with your settings:
+```env
+HOSTNAME=feed.yourdomain.com
+HANDLE=your-handle.bsky.social
+PASSWORD=your-password
+CHRONOLOGICAL_TRENDING_URI=at://did:plc:abcde...
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your-db-password
+POSTGRES_DB=feed
+```
+> Note: Obtain CHRONOLOGICAL_TRENDING_URI by running publish_feed.py first.
+
+3. Start the services:
+```shell
+docker compose up --build --remove-orphans
+```
+
+This will start:
+- PostgreSQL database with attached volume for database persistence
+- Firehose data stream python process
+- Feed generator Web server with Gunicorn (4 workers)
 
 ## Endpoints
 
@@ -126,7 +90,7 @@ The server provides the following endpoints:
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the MIT License.
 
 ## Acknowledgements
 
@@ -134,5 +98,4 @@ Special thanks to [@MarshalX](https://github.com/MarshalX) for the foundational 
 
 ## Banned Content
 - **Handles to Exclude:** `flintds.bsky.social`
-
 - **Exclude Tokens:** `trump`, `sylvana`, `sylvanna`, `alleria`, `uriele`, `mormon`
