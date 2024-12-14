@@ -150,8 +150,8 @@ def _run(name, operations_callback, stream_stop_event=None):
             #logger.warning(f"Received non-commit message: {commit}")
             return
 
-        # Update the cursor every ~1,000 events
-        if commit.seq % 1000 == 0:
+        # Update the cursor every ~10,000 events
+        if commit.seq % 10000 == 0:
             logger.info(f'Cursor -> {commit.seq}')
             # Update the client's parameters with the new cursor
             client.update_params(models.ComAtprotoSyncSubscribeRepos.Params(cursor=commit.seq))
