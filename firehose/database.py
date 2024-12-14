@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+import time
 
 from utils.logger import logger
 from utils.config import HANDLE, PASSWORD, POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USER
@@ -123,9 +124,12 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
                         current_post.interactions = hot_score
                         #logger.info(f"{current_post}")
                         posts_to_update.append(current_post)
+                    
+                # pause the loop for 3 seconds
+                time.sleep(3)
 
             except exceptions.AtProtocolError as api_err:
-                if hasattr(api_err, 'response'):
+                if api_err.response:
                     status_code = api_err.response.status_code
                     if status_code == 429:
                         # Rate limited during hydration
@@ -207,7 +211,7 @@ def start_scheduler(client: Client, schedule_hydration: bool = False) -> Backgro
     logger.info("Scheduled daily cleanup_db job at 8 AM UTC.")
 
     if schedule_hydration:
-        # Schedule hydrate_posts_with_interactions to run every 20 minutes
+        # Schedule hydrate_posts_with_interactions to run every 30 minutes
         scheduler.add_job(
             hydrate_posts_with_interactions,
             trigger=IntervalTrigger(minutes=30),
@@ -217,7 +221,7 @@ def start_scheduler(client: Client, schedule_hydration: bool = False) -> Backgro
             coalesce=True,  # If job is missed, run it immediately
             replace_existing=True
         )
-        logger.info("Scheduled interval hydrate_posts_with_interactions job every 20 minutes.")
+        logger.info("Scheduled interval hydrate_posts_with_interactions job every 30 minutes.")
 
     # Add listener for job events
     scheduler.add_listener(lambda event: hydration_job_listener(event, scheduler), EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
