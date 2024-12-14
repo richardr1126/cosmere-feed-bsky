@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from utils.logger import logger
+from firehose.utils.logger import logger
 from firehose.utils.config import POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
 import peewee
 

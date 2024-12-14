@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from firehose.utils import config
-from utils.logger import logger
+from firehose.utils.logger import logger
 from web.algos import algos
 
 app = Flask(__name__)

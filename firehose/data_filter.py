@@ -267,7 +267,7 @@ def operations_callback(ops: defaultdict) -> None:
             reply_parent = post['record'].reply.parent.uri if post['record'].reply else None
 
             #logger.info(f'Processing matched post: {record.text}')
-            logger.info(f'Processing matched post from {did_resolver.resolve(did.also_known_as[0])}')
+            logger.info(f'Processing matched post from {did_resolver.resolve(dict(did).also_known_as[0])}')
 
             posts_to_create.append({
                 'uri': post['uri'],

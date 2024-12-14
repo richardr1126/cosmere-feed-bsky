@@ -199,7 +199,7 @@ def start_scheduler(client: Client, schedule_hydration: bool = False) -> Backgro
         cleanup_db,
         trigger='cron',
         hour=8,
-        args=[3],
+        args=[30],
         id='cleanup_db',
         max_instances=1,
         replace_existing=True
@@ -210,7 +210,7 @@ def start_scheduler(client: Client, schedule_hydration: bool = False) -> Backgro
         # Schedule hydrate_posts_with_interactions to run every 20 minutes
         scheduler.add_job(
             hydrate_posts_with_interactions,
-            trigger=IntervalTrigger(minutes=20),
+            trigger=IntervalTrigger(minutes=30),
             args=[client],
             id='hydrate_posts_interval',
             max_instances=1,

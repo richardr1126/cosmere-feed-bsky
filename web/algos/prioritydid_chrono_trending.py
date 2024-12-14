@@ -2,9 +2,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict
 import json
 
-from utils import config
+from firehose.utils import config
 from web.database_ro import Post
-from utils.logger import logger
+from firehose.utils.logger import logger
 
 uri = config.CHRONOLOGICAL_TRENDING_URI
 CURSOR_EOF = 'eof'
