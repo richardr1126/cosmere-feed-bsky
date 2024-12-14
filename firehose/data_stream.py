@@ -123,7 +123,7 @@ def _run(name, operations_callback, stream_stop_event=None):
         SubscriptionState.create(service=name, cursor=0)
 
     # Initialize the firehose client w/o a cursor for now
-    client = FirehoseSubscribeReposClient()
+    client = FirehoseSubscribeReposClient(params)
 
     def on_message_handler(message: firehose_models.MessageFrame) -> None:
         """
@@ -150,16 +150,15 @@ def _run(name, operations_callback, stream_stop_event=None):
             #logger.warning(f"Received non-commit message: {commit}")
             return
 
-        # Update the cursor every ~10,000 events
-        if commit.seq % 10000 == 0:
+        # Update the cursor every ~1,000 events
+        if commit.seq % 1000 == 0:
             logger.info(f'Cursor -> {commit.seq}')
             # Update the client's parameters with the new cursor
             client.update_params(models.ComAtprotoSyncSubscribeRepos.Params(cursor=commit.seq))
             # Persist the new cursor in the database
-            # try:
-            #     SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
-            # except Exception as e:
-            #     logger.error(f"Failed to update cursor in database: {e}")
+            with db.atomic():
+                SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
+
 
         if not commit.blocks:
             # Skip if there are no blocks to process
