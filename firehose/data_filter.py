@@ -5,6 +5,18 @@ from atproto import models, Client, IdResolver
 from utils.logger import logger
 from database import db, Post, init_client
 
+handle_resolver = IdResolver().handle
+did_resolver = IdResolver().did
+handles_to_include = [
+    'stormlightmemes.bsky.social',
+    'brotherwisegames.bsky.social',
+]
+hanles_to_exclude = [
+    'flintds.bsky.social'
+]
+dids_to_include = [handle_resolver.resolve(handle) for handle in handles_to_include]
+dids_to_exclude = [handle_resolver.resolve(handle) for handle in hanles_to_exclude]
+
 PHRASES = [
     '17th shard',
     'bands of mourning',
@@ -220,17 +232,6 @@ def matches_filters(text):
 
 #     return post_details
 
-resolver = IdResolver().handle
-handles_to_include = [
-    'stormlightmemes.bsky.social',
-    'brotherwisegames.bsky.social',
-]
-hanles_to_exclude = [
-    'flintds.bsky.social'
-]
-dids_to_include = [resolver.resolve(handle) for handle in handles_to_include]
-dids_to_exclude = [resolver.resolve(handle) for handle in hanles_to_exclude]
-
 def operations_callback(ops: defaultdict) -> None:
     created_posts = ops[models.ids.AppBskyFeedPost]['created']
     deleted_posts = ops[models.ids.AppBskyFeedPost]['deleted']
@@ -265,7 +266,8 @@ def operations_callback(ops: defaultdict) -> None:
             reply_root = post['record'].reply.root.uri if post['record'].reply else None
             reply_parent = post['record'].reply.parent.uri if post['record'].reply else None
 
-            logger.info(f'Processing matched post: {record.text}')
+            #logger.info(f'Processing matched post: {record.text}')
+            logger.info(f'Processing matched post from {did_resolver.resolve(did.also_known_as[0])}')
 
             posts_to_create.append({
                 'uri': post['uri'],

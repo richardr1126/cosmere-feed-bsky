@@ -1,20 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from utils.logger import logger
+from firehose.utils.config import POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
 import peewee
 
-file = 'file:/var/data/new_cosmere_feed.db?mode=ro'
-
-# Configure the read-only SQLite database connection using URI
-db = peewee.SqliteDatabase(
-    file,
-    uri=True,
-    timeout=60,
-    pragmas={
-        'journal_mode': 'wal',
-        'cache_size': -1024 * 256,
-        'busy_timeout': 60000
-    }
-)
+db = peewee.PostgresqlDatabase(POSTGRES_DB, user=POSTGRES_USER, password=POSTGRES_PASSWORD, host='postgres', port=5432)
 
 class BaseModel(peewee.Model):
     class Meta:

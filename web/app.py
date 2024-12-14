@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from utils import config
+from firehose.utils import config
 from utils.logger import logger
 from web.algos import algos
 

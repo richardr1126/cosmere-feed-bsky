@@ -1,4 +1,14 @@
 services:
+  postgres:
+    container_name: postgres
+    image: postgres
+    env_file:
+      - .env
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
   firehose:
     container_name: firehose
     image: richardr1126/firehose
@@ -6,10 +16,10 @@ services:
       context: ./firehose
     env_file:
       - .env
-    volumes:
-      - feeddata:/var/data
     stdin_open: true
     tty: true
+    depends_on:
+      - postgres
 
   web:
     container_name: web
@@ -20,10 +30,10 @@ services:
       - .env
     ports:
       - "8000:8000"
-    volumes:
-      - feeddata:/var/data
     stdin_open: true
     tty: true
+    depends_on:
+      - postgres
 
 volumes:
-  feeddata:
+  dbdata:

@@ -1,10 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-import logging
-import shutil
 
-from utils.logger import logger  # Ensure this is correctly implemented
-from utils.config import HANDLE, PASSWORD  # Ensure these are set in your config
+from utils.logger import logger
+from utils.config import HANDLE, PASSWORD, POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USER
 import peewee
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.base import JobLookupError
@@ -13,17 +11,8 @@ from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
 from atproto import Client, SessionEvent, Session, exceptions
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 # Database setup
-file = '/var/data/new_cosmere_feed.db'
-db = peewee.SqliteDatabase(file, timeout=60, pragmas={
-    'journal_mode': 'wal',
-    'cache_size': -1024 * 256,
-    'busy_timeout': 60000
-})
+db = peewee.PostgresqlDatabase(POSTGRES_DB, user=POSTGRES_USER, password=POSTGRES_PASSWORD, host='postgres', port=5432)
 
 # Database Models
 class BaseModel(peewee.Model):
@@ -47,17 +36,7 @@ class SessionState(BaseModel):
     service = peewee.CharField(unique=True)
     session_string = peewee.TextField(null=True)
 
-# SQLite database management functions
-def backup_database():
-    try:
-        db.close()
-        backup_file = file.replace('.db', '_backup.db')
-        shutil.copy(file, backup_file)
-        logger.info(f"Database backup created at {backup_file}.")
-        db.connect()
-    except Exception as e:
-        logger.error(f"Failed to backup database: {e}")
-
+# Postgres database management functions
 def clear_old_posts(clear_days: int):
     try:
         cutoff_date = datetime.now() - timedelta(days=clear_days)
@@ -75,26 +54,13 @@ def vacuum_database():
         logger.error(f"An error occurred during vacuuming: {e}")
 
 def cleanup_db(clear_days: int = 3):
-    backup_database()
     clear_old_posts(clear_days)
     vacuum_database()
 
 # Hydration Function with Rate Limit and Expired Token Handling
-import logging
-from datetime import datetime, timezone, timedelta
-from peewee import fn
-from typing import List
-
-# Configure logging
-logger = logging.getLogger(__name__)
-
-# Assuming Post is your Peewee model and Client is your API client
-# from your_models import Post
-# from your_api_client import Client, exceptions
-
 def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
     try:
-        # Retrieve all post URIs and current interactions from the database
+        # get posts with uri and interactions
         posts = Post.select(Post.uri, Post.interactions)
         uris = [post.uri for post in posts]
 
@@ -102,7 +68,7 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
             logger.info("No posts found in the database to hydrate.")
             return
 
-        # Initialize a list to collect posts that need to be updated
+        # list to collect
         posts_to_update = []
 
         # Process URIs in batches
@@ -145,9 +111,9 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
                     # Adding 2 to avoid division by zero and to give a slight boost to newer posts
                     interactions_score = like_count + (reply_count * 2) + (repost_count * 3)
                     hot_score = interactions_score / ((time_diff_hours + 2) ** 1.5)
+                    
+                    # Round the hot_score to an integer
                     hot_score *= 100  # Scaling the score
-
-                    # Round the hot_score to an integer for consistency
                     hot_score = int(hot_score)
 
                     # Fetch the current interaction score from the database
@@ -184,10 +150,6 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
             try:
                 with db.atomic():
                     updated = Post.bulk_update(posts_to_update, fields=['interactions'])
-                # with db.atomic():
-                #     updated = 0
-                #     for post in posts_to_update:
-                #         updated += post.save()
 
                 logger.info(f"Hydrated {updated} posts with updated hot_scores.")
             except Exception as e:
