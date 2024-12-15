@@ -14,11 +14,12 @@
 
 ## Features
 
-- The generator offers custom filtering using PostgreSQL and regular expressions to identify Cosmere-related content.
-- It integrates trending posts by calculating interaction scores and maintains the database by cleaning outdated entries with `apscheduler`.
-- Deployment is streamlined with Docker Compose to run the `web`, `firehose`, and `postgres` services.
-- Uses Docker compose to run the `web`, `firehose`, and `postgres` services.
-> **Note:** Posts are only kept for 30 days, and trending posts are calculated based on interactions within the last 24 hours.
+- Custom filtering using regexp:
+   - **Tokens:** individual keywords, e.g., `mistborn` will match post with text `i love mistborn era 2` it also allows for pluralization, e.g., `mistborns` will match
+- It integrates trending posts by calculating interaction scores and maintains the database by cleaning outdated entries with `apscheduler`
+- Deployment is streamlined with Docker Compose to run the `web`, `firehose`, and `postgres` services
+- Uses Docker compose to run the `web`, `firehose`, and `postgres` services
+> **Note:** Posts are only kept for 30 days, and trending posts are calculated based on interactions within the last 24 hours
 
 ## Filters
 

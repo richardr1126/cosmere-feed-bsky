@@ -41,10 +41,12 @@ def handler(cursor: Optional[str], limit: int) -> dict:
 
     if limit == 1:
         logger.info("Returning a single main post for limit 1")
+        latest_post = Post.select().order_by(Post.indexed_at.desc(), Post.cid.desc()).first()
         return {
             'cursor': CURSOR_EOF,
-            'feed': [{'post': Post.select().order_by(Post.indexed_at.desc(), Post.cid.desc()).first().uri}]
+            'feed': [{'post': latest_post.uri}] if latest_post else []
         }
+
 
     try:
         # Define time thresholds

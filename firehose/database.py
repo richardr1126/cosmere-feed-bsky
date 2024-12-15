@@ -40,19 +40,38 @@ class SessionState(BaseModel):
 # Postgres database management functions
 def clear_old_posts(clear_days: int):
     try:
-        cutoff_date = datetime.now() - timedelta(days=clear_days)
-        query = Post.delete().where(Post.indexed_at < cutoff_date)
-        num_deleted = query.execute()
-        logger.info(f"Deleted {num_deleted} posts older than {cutoff_date}.")
+        with db.connection_context():
+            logger.info("Database connection opened for cleanup.")
+            cutoff_date = datetime.now() - timedelta(days=clear_days)
+            query = Post.delete().where(Post.indexed_at < cutoff_date)
+
+            with db.atomic():
+                num_deleted = query.execute()
+                
+            logger.info(f"Deleted {num_deleted} posts older than {cutoff_date}.")
     except peewee.PeeweeException as e:
         logger.error(f"An error occurred while deleting old posts: {e}")
+    finally:
+        if not db.is_closed():
+            db.close()
+            logger.info("Database connection closed after cleanup by force.")
+        else:
+            logger.info("Database connection closed after cleanup.")
 
 def vacuum_database():
     try:
-        db.execute_sql('VACUUM;')
-        logger.info("Database vacuumed to reclaim space.")
+        with db.connection_context():
+            logger.info("Database connection opened for vacuum.")
+            db.execute_sql('VACUUM FULL;')
+            logger.info("Vacuum operation completed.")
     except peewee.PeeweeException as e:
-        logger.error(f"An error occurred during vacuuming: {e}")
+        logger.error(f"An error occurred while vacuuming the database: {e}")
+    finally:
+        if not db.is_closed():
+            db.close()
+            logger.info("Database connection closed after vacuum by force.")
+        else:
+            logger.info("Database connection closed after vacuum.")
 
 def cleanup_db(clear_days: int = 3):
     clear_old_posts(clear_days)
@@ -61,108 +80,117 @@ def cleanup_db(clear_days: int = 3):
 # Hydration Function with Rate Limit and Expired Token Handling
 def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
     try:
-        # get posts with uri and interactions
-        posts = Post.select(Post.uri, Post.interactions)
-        uris = [post.uri for post in posts]
+        with db.connection_context():
+            logger.info("Hydration Database connection opened.")
+            # get posts with uri and interactions
+            posts = Post.select(Post.uri, Post.interactions)
+            uris = [post.uri for post in posts]
 
-        if not uris:
-            logger.info("No posts found in the database to hydrate.")
-            return
+            if not uris:
+                logger.info("No posts found in the database to hydrate.")
+                return
 
-        # list to collect
-        posts_to_update = []
+            # list to collect
+            posts_to_update = []
 
-        # Process URIs in batches
-        for i in range(0, len(uris), batch_size):
-            batch_uris = uris[i:i + batch_size]
-            try:
-                # Fetch posts from the API
-                fetched_posts = client.get_posts(uris=batch_uris)
-                fetched_posts = fetched_posts['posts']
+            # Process URIs in batches
+            for i in range(0, len(uris), batch_size):
+                batch_uris = uris[i:i + batch_size]
+                try:
+                    # Fetch posts from the API
+                    fetched_posts = client.get_posts(uris=batch_uris)
+                    fetched_posts = fetched_posts['posts']
 
-                for fetched_post in fetched_posts:
-                    uri = fetched_post.uri
-                    if not uri:
-                        continue
+                    for fetched_post in fetched_posts:
+                        uri = fetched_post.uri
+                        if not uri:
+                            continue
 
-                    # Extract interaction counts
-                    like_count = fetched_post.like_count
-                    reply_count = fetched_post.reply_count
-                    repost_count = fetched_post.repost_count
-                    indexed_at_str = fetched_post.indexed_at
+                        # Extract interaction counts
+                        like_count = fetched_post.like_count
+                        reply_count = fetched_post.reply_count
+                        repost_count = fetched_post.repost_count
+                        indexed_at_str = fetched_post.indexed_at
 
-                    # Convert indexed_at to datetime object
-                    try:
-                        indexed_at = datetime.fromisoformat(indexed_at_str)
-                        if indexed_at.tzinfo is None:
-                            # Assume UTC if timezone is not provided
-                            indexed_at = indexed_at.replace(tzinfo=timezone.utc)
-                        else:
-                            indexed_at = indexed_at.astimezone(timezone.utc)
-                    except Exception as e:
-                        logger.error(f"Error parsing indexed_at for post {uri}: {e}")
-                        continue
+                        # Convert indexed_at to datetime object
+                        try:
+                            indexed_at = datetime.fromisoformat(indexed_at_str)
+                            if indexed_at.tzinfo is None:
+                                # Assume UTC if timezone is not provided
+                                indexed_at = indexed_at.replace(tzinfo=timezone.utc)
+                            else:
+                                indexed_at = indexed_at.astimezone(timezone.utc)
+                        except Exception as e:
+                            logger.error(f"Error parsing indexed_at for post {uri}: {e}")
+                            continue
 
-                    # Calculate time difference in hours
-                    time_diff = datetime.now(timezone.utc) - indexed_at
-                    time_diff_hours = time_diff.total_seconds() / 3600
+                        # Calculate time difference in hours
+                        time_diff = datetime.now(timezone.utc) - indexed_at
+                        time_diff_hours = time_diff.total_seconds() / 3600
 
-                    # Calculate "What's Hot" score
-                    # Formula: hot_score = interactions / ( (age_in_hours + 2) ** 1.5 )
-                    # Adding 2 to avoid division by zero and to give a slight boost to newer posts
-                    interactions_score = like_count + (reply_count * 2) + (repost_count * 3)
-                    hot_score = interactions_score / ((time_diff_hours + 2) ** 1.5)
-                    
-                    # Round the hot_score to an integer
-                    hot_score *= 100  # Scaling the score
-                    hot_score = int(hot_score)
+                        # Calculate "What's Hot" score
+                        # Formula: hot_score = interactions / ( (age_in_hours + 2) ** 1.5 )
+                        # Adding 2 to avoid division by zero and to give a slight boost to newer posts
+                        interactions_score = like_count + (reply_count * 2) + (repost_count * 3)
+                        hot_score = interactions_score / ((time_diff_hours + 2) ** 1.5)
+                        
+                        # Round the hot_score to an integer
+                        hot_score *= 100  # Scaling the score
+                        hot_score = int(hot_score)
 
-                    # Fetch the current interaction score from the database
-                    current_post = Post.get_or_none(Post.uri == uri)
-                    if current_post and current_post.interactions != hot_score:
-                        # Update the interactions in list for bulk update
-                        current_post.interactions = hot_score
-                        #logger.info(f"{current_post}")
-                        posts_to_update.append(current_post)
-                    
-                # pause the loop for 3 seconds
-                time.sleep(3)
+                        # Fetch the current interaction score from the database
+                        current_post = Post.get_or_none(Post.uri == uri)
+                        if current_post and current_post.interactions != hot_score:
+                            # Update the interactions in list for bulk update
+                            current_post.interactions = hot_score
+                            #logger.info(f"{current_post}")
+                            posts_to_update.append(current_post)
+                        
+                    # pause the loop for 3 seconds
+                    time.sleep(3)
 
-            except exceptions.AtProtocolError as api_err:
-                if api_err.response:
-                    status_code = api_err.response.status_code
-                    if status_code == 429:
-                        # Rate limited during hydration
-                        reset_timestamp = api_err.response.headers.get('RateLimit-Reset')
-                        if reset_timestamp:
-                            reset_time = datetime.fromtimestamp(int(reset_timestamp), timezone.utc)
-                        else:
-                            reset_time = datetime.now(timezone.utc) + timedelta(seconds=60)  # Default to 60 seconds
-                        logger.warning(f"Rate limit exceeded during hydration. Next attempt at {reset_time} UTC.")
-                        reschedule_hydration(reset_time, scheduler)
-                        return  # Exit to prevent further API calls
-                    elif status_code == 400:
-                        # Handle other specific status codes if necessary
-                        logger.error(f"Hydration failed with status 400. Content: {api_err.response.content}")
-                        # Optionally, implement additional error handling here
-                else:
-                    logger.error(f"API error while fetching posts without response: {api_err}")
-            except Exception as e:
-                logger.error(f"Unexpected error while hydrating posts: {e}")
+                except exceptions.AtProtocolError as api_err:
+                    if api_err.response:
+                        status_code = api_err.response.status_code
+                        if status_code == 429:
+                            # Rate limited during hydration
+                            reset_timestamp = api_err.response.headers.get('RateLimit-Reset')
+                            if reset_timestamp:
+                                reset_time = datetime.fromtimestamp(int(reset_timestamp), timezone.utc)
+                            else:
+                                reset_time = datetime.now(timezone.utc) + timedelta(seconds=60)  # Default to 60 seconds
+                            logger.warning(f"Rate limit exceeded during hydration. Next attempt at {reset_time} UTC.")
+                            reschedule_hydration(reset_time, scheduler)
+                            return  # Exit to prevent further API calls
+                        elif status_code == 400:
+                            # Handle other specific status codes if necessary
+                            logger.error(f"Hydration failed with status 400. Content: {api_err.response.content}")
+                            # Optionally, implement additional error handling here
+                    else:
+                        logger.error(f"API error while fetching posts without response: {api_err}")
+                except Exception as e:
+                    logger.error(f"Unexpected error while hydrating posts: {e}")
 
-        if posts_to_update:
-            try:
-                with db.atomic():
-                    updated = Post.bulk_update(posts_to_update, fields=['interactions'])
+            if posts_to_update:
+                try:
+                    with db.atomic():
+                        updated = Post.bulk_update(posts_to_update, fields=['interactions'])
 
-                logger.info(f"Hydrated {updated} posts with updated hot_scores.")
-            except Exception as e:
-                logger.error(f"Failed to bulk update posts: {e}")
-        else:
-            logger.info("No posts needed updating based on the latest interactions.")
+                    logger.info(f"Hydrated {updated} posts with updated hot_scores.")
+                except Exception as e:
+                    logger.error(f"Failed to bulk update posts: {e}")
+            else:
+                logger.info("No posts needed updating based on the latest interactions.")
 
     except Exception as e:
         logger.error(f"Error in hydration process: {e}")
+
+    finally:
+        if not db.is_closed():
+            db.close()
+            logger.info("Hydration Database connection closed by force.")
+        else :
+            logger.info("Hydration Database connection closed.")
 
 # Rescheduling Functions
 def reschedule_hydration(reset_time: datetime, scheduler: BackgroundScheduler):

@@ -29,30 +29,27 @@ EXCLUDE_TOKENS = filters['EXCLUDE_TOKENS']
 dids_to_include = [handle_resolver.resolve(handle) for handle in HANDLES]
 dids_to_exclude = [handle_resolver.resolve(handle) for handle in EXCLUDE_HANDLES]
 
-def compile_pattern(items, word_boundary=True, optional_prefix=None, plural=False):
+def compile_pattern(items, word_boundary=True, plural=True):
     escaped = [re.escape(item) for item in items]
     if plural:
         # Add optional 's' at the end
         escaped = [f"{item}s?" for item in escaped]
     pattern = "|".join(escaped)
-    if optional_prefix:
-        # Use formatted raw strings to handle \s correctly
-        pattern = fr"(?:{optional_prefix}\s+)?" + fr"(?:{pattern})"
     if word_boundary:
         # Use raw string for word boundaries
         pattern = r'\b(?:' + pattern + r')\b'
     return pattern
 
 # Compile single-word include tokens into one pattern
-INCLUDE_TOKENS_PATTERN = compile_pattern(TOKENS, word_boundary=True, plural=True)
+INCLUDE_TOKENS_PATTERN = compile_pattern(TOKENS)
 INCLUDE_TOKENS_REGEX = re.compile(INCLUDE_TOKENS_PATTERN, re.IGNORECASE)
 
 # Compile single-word exclude tokens into one pattern
-EXCLUDE_TOKENS_PATTERN = compile_pattern(EXCLUDE_TOKENS, word_boundary=True, plural=True)
+EXCLUDE_TOKENS_PATTERN = compile_pattern(EXCLUDE_TOKENS)
 EXCLUDE_TOKENS_REGEX = re.compile(EXCLUDE_TOKENS_PATTERN, re.IGNORECASE)
 
 # Compile phrases into one pattern
-PHRASES_PATTERN = compile_pattern(PHRASES, word_boundary=True, optional_prefix='the')
+PHRASES_PATTERN = compile_pattern(PHRASES)
 PHRASES_REGEX = re.compile(PHRASES_PATTERN, re.IGNORECASE)
 
 # Compile tokens with spaces using positive lookaheads
