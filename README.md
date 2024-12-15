@@ -36,8 +36,12 @@ The feed generator uses the following filters to curate content:
 
 1. **Update files:**
    - Update `publish_feed.py` with your feed details. **(REQUIRED)**
-   - Modify filters in `firehose/data_filter.py`. **(OPTIONAL)**
-   - Update environment variables in `.env`. **(REQUIRED)**
+   - Modify feed post inclusion filters in `firehose/filter_config.py`. **(OPTIONAL)**
+   - Update environment variables. **(REQUIRED)**
+
+      ```shell
+      cp example.env .env
+      ```
 
 2. **Publish Your Feed:** Follow the [Publishing Your Feed](#publishing-your-feed) instructions below.
 
@@ -52,11 +56,6 @@ python publish_feed.py
 After successful publication, your feed will appear in the Bluesky app. Obtain the CHRONOLOGICAL_TRENDING_URI for the .env file from the output.
 
 ## Installation with Docker Compose
-
-1. Configure environment variables:
-```shell
-cp example.env .env
-```
 
 2. Edit .env with your settings:
 ```env

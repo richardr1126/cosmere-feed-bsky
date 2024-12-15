@@ -4,159 +4,30 @@ from collections import defaultdict
 from atproto import models, Client, IdResolver
 from utils.logger import logger
 from database import db, Post, init_client
+import json
+from pathlib import Path
 
 handle_resolver = IdResolver().handle
 did_resolver = IdResolver().did
-handles_to_include = [
-    'stormlightmemes.bsky.social',
-    'brotherwisegames.bsky.social',
-]
-hanles_to_exclude = [
-    'flintds.bsky.social'
-]
-dids_to_include = [handle_resolver.resolve(handle) for handle in handles_to_include]
-dids_to_exclude = [handle_resolver.resolve(handle) for handle in hanles_to_exclude]
 
-PHRASES = [
-    '17th shard',
-    'bands of mourning',
-    'brandon sanderson',
-    'cognitive realm',
-    'rhythm of war',
-    'shadows of self',
-    'sixth of the dusk',
-    'shadows for silence',
-    'shadows of silence',
-    'ember dark',
-    "emperor's soul",
-    'isles of the ember dark',
-    'stormlight archive',
-    'sunlit man',
-    'alloy of law',
-    'hero of ages',
-    'lost metal',
-    'way of kings',
-    'well of ascension',
-    'tress of the emerald sea',
-    'wind and truth',
-    'words of radiance',
-    'yumi and the nightmare painter',
-    'shattered planes',
-    'knight radiant',
-    'knights radiant',
-    'journey before destination',
-    'life before death, strength before weakness',
-    'dragon steel nexus',
-]
+FILTER_FILE = Path('filter_config.json')
 
-INCLUSIVE_MULTI_TOKENS = [
-    'brandon sanderson',
-    'yumi sanderson',
-    'vin elend',
-    'yumi painter',
-    'shallan adolin',
-    'kaladin syl',
-    'kaladin adolin',
-    'kaladin shallan',
-    'navani kholin',
-    'shallan pattern',
-    'shallan veil',
-    'shallan radiant',
-    'vin kelsier',
-    'kelsier survivor',
-    'wax wayne marasi',
-    'steris marasi',
-    'cryptic spren',
-    'steris wax',
-    'szeth nightblood',
-    'shades threnody',
-    'threnody hell'
-]
+def load_filters():
+    """Load filters from JSON file or return defaults if file doesn't exist"""
+    if FILTER_FILE.exists():
+        with open(FILTER_FILE, 'r') as f:
+            return json.load(f)
 
-TOKENS = [
-    'allomancy',
-    'bondsmith',
-    'cosmere',
-    'dalinar',
-    'dawnshard',
-    'dragonsteel',
-    'dustbringer',
-    'edgedancer',
-    'elantris',
-    'elsecaller',
-    'stormblessed',
-    'thaidakar',
-    'kholin',
-    'lightweaver',
-    'mistborn',
-    'oathbringer',
-    'sanderlanche',
-    'sazed',
-    'shadesmar',
-    'skybreaker',
-    'spren',
-    'stoneward',
-    'stormlight',
-    'surgebinding',
-    'truthwatcher',
-    'warbreaker',
-    'willshaper',
-    'windrunner',
-    'roshar',
-    'scadrial',
-    'taldain',
-    'voidbringer',
-    'shardblade',
-    'shardplate',
-    'shardbearer',
-    'feruchemy',
-    'hemalurgy',
-    'lerasium',
-    'atium',
-    'mistcloak',
-    'kandra',
-    'koloss',
-    'skaa',
-    'highstorm',
-    'parshendi',
-    'urithiru',
-    'honorblade',
-    'surgebinder',
-    'dawnshard',
-    'worldhopper',
-    'perpendicularity',
-    'adonalsium',
-    'chasmfiend',
-    'worldbringer',
-    'allomancer',
-    'highspren',
-    'elantrian',
-    'inkspren',
-    'honorspren',
-    'cultivationspren',
-    'peakspren',
-    'ashspren',
-    'luckspren',
-    'windspren',
-    'lifespren',
-    'towerlight',
-    'voidlight',
-    'brandosando',
-    'numuhukumakiaki\'ialunamor',
-    'dsnx24',
-    'dsnx2024',
-    'dragonsteelnexus',
-    'dragonsteelnexus2024'
-]
+filters = load_filters()
+HANDLES = filters['HANDLES']
+EXCLUDE_HANDLES = filters['EXCLUDE_HANDLES']
+PHRASES = filters['PHRASES']
+INCLUSIVE_MULTI_TOKENS = filters['INCLUSIVE_MULTI_TOKENS']
+TOKENS = filters['TOKENS']
+EXCLUDE_TOKENS = filters['EXCLUDE_TOKENS']
 
-EXCLUDE_TOKENS = [
-    'trump',
-    'sylvana',
-    'sylvanna',
-    'alleria',
-    'uriele',
-    'mormon',
-]
+dids_to_include = [handle_resolver.resolve(handle) for handle in HANDLES]
+dids_to_exclude = [handle_resolver.resolve(handle) for handle in EXCLUDE_HANDLES]
 
 def compile_pattern(items, word_boundary=True, optional_prefix=None, plural=False):
     escaped = [re.escape(item) for item in items]
@@ -215,22 +86,6 @@ def matches_filters(text):
 
     return False
 
-# def get_full_post_info(post_uri, record):
-#     logger.info(f'Processing matched post: {record.text}')
-
-#     # Log-in to the client
-#     client = Client()
-#     client.login(HANDLE, PASSWORD)
-    
-#     # Retrieve the post thread
-#     response = client.app.bsky.feed.get_post_thread({'uri': post_uri})
-
-#     # Access the post details
-#     post_details = response['thread']
-#     logger.info(f'Post details: {post_details}')
-#     # post.author.handle
-
-#     return post_details
 
 def operations_callback(ops: defaultdict) -> None:
     created_posts = ops[models.ids.AppBskyFeedPost]['created']
