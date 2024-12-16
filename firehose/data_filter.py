@@ -137,8 +137,7 @@ def operations_callback(ops: defaultdict) -> None:
         if post_uris_to_delete:
             # Assuming Post.delete() returns a query builder that needs to be executed
             deleted_count = 0
-            with db.atomic():
-                deleted_count = Post.delete().where(Post.uri.in_(post_uris_to_delete)).execute()
+            deleted_count = Post.delete().where(Post.uri.in_(post_uris_to_delete)).execute()
             if deleted_count>0: logger.info(f'Deleted: {deleted_count}')
 
     if posts_to_create:

@@ -12,6 +12,8 @@ from atproto.exceptions import FirehoseError
 
 from database import SubscriptionState, db
 from utils.logger import logger
+from database import db, Post, SubscriptionState, SessionState
+import db_scheduler as db_scheduler
 
 # Define the types of records we're interested in and their corresponding namespace IDs
 _INTERESTED_RECORDS = {
@@ -89,6 +91,14 @@ def run(name, operations_callback, stream_stop_event=None):
         operations_callback: A callback function to handle the operations extracted from messages.
         stream_stop_event: An optional threading.Event to signal when to stop the stream.
     """
+    # Initialize Database
+    if db.is_closed():
+        db.connect()
+        db.create_tables([Post, SubscriptionState, SessionState])
+        logger.info("Database connected and tables created.")
+
+    db_scheduler.start()
+
     while stream_stop_event is None or not stream_stop_event.is_set():
         try:
             # Start the main run loop
@@ -158,11 +168,9 @@ def _run(name, operations_callback, stream_stop_event=None):
             # Update the client's parameters with the new cursor
             client.update_params(models.ComAtprotoSyncSubscribeRepos.Params(cursor=commit.seq))
             # Persist the new cursor in the database
-            with db.atomic():
-                try:
-                    SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
-                except Exception as e:
-                    logger.error(f"Failed to update cursor: {e}")
+            #with db.atomic():
+            SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
+                
 
 
         if not commit.blocks:
