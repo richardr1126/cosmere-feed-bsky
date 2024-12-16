@@ -100,6 +100,8 @@ def run(name, operations_callback, stream_stop_event=None):
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
             break
+        finally:
+            logger.info("You should not see this ...")
 
 
 def _run(name, operations_callback, stream_stop_event=None):
@@ -157,7 +159,10 @@ def _run(name, operations_callback, stream_stop_event=None):
             client.update_params(models.ComAtprotoSyncSubscribeRepos.Params(cursor=commit.seq))
             # Persist the new cursor in the database
             with db.atomic():
-                SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
+                try:
+                    SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
+                except Exception as e:
+                    logger.error(f"Failed to update cursor: {e}")
 
 
         if not commit.blocks:

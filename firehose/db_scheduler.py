@@ -20,8 +20,9 @@ def start():
 
     # Start Scheduler
     scheduler = start_scheduler(client, schedule_hydration=True)
-    for job in scheduler.get_jobs():
-        job.modify(next_run_time=datetime.now())  # Trigger all jobs immediately
+    
+    # for job in scheduler.get_jobs():
+    #     job.modify(next_run_time=datetime.now())  # Trigger all jobs immediately
 
 # Postgres database management functions
 def clear_old_posts(clear_days: int):

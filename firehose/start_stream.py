@@ -18,24 +18,19 @@ def main():
         stream_stop_event.set()
         sys.exit(0)
 
-    for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGHUP]:
-        signal.signal(sig, handle_termination)
+    signal.signal(signal.SIGINT, handle_termination)
+
+    # Initialize Database
+    if db.is_closed():
+        db.connect()
+        db.create_tables([Post, SubscriptionState, SessionState])
+        logger.info("Database connected and tables created.")
+    db_scheduler.start()
 
     
+    data_stream.run(config.SERVICE_DID, operations_callback, stream_stop_event)
+    logger.info("firehose has exited")
 
-    while not stream_stop_event.is_set():
-        try:
-            # Initialize Database
-            if db.is_closed():
-                db.connect()
-                db.create_tables([Post, SubscriptionState, SessionState])
-                logger.info("Database connected and tables created.")
-            
-            db_scheduler.start()
-            data_stream.run(config.SERVICE_DID, operations_callback, stream_stop_event)
-        except Exception as e:
-            logger.error(f"An exception occurred in the firehose: {e}")
-            logger.info("Restarting the firehose stream...")
 
 if __name__ == '__main__':
     main()
