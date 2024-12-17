@@ -28,9 +28,14 @@ class SessionState(BaseModel):
     service = peewee.CharField(unique=True)
     session_string = peewee.TextField(null=True)
 
+# table for storing dids
+class Requests(BaseModel):
+    indexed_at = peewee.DateTimeField(default=datetime.now(timezone.utc), index=True)
+    did = peewee.CharField(null=True, default=None, index=True)
+
 if db.is_closed():
     try:
         db.connect()
-        logger.info("Read-only database connection established.")
+        logger.info("Web worker database connection established.")
     except peewee.OperationalError as e:
         logger.error(f"Failed to connect to the database in read-only mode: {e}")

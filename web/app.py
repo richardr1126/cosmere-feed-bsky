@@ -1,7 +1,10 @@
+from datetime import datetime, timezone
 from flask import Flask, jsonify, request
 from firehose.utils import config
 from firehose.utils.logger import logger
 from web.algos import algos
+from web.auth import AuthorizationError, validate_auth
+from web.database_ro import Requests
 
 app = Flask(__name__)
 
@@ -49,6 +52,16 @@ def get_feed_skeleton():
         cursor = request.args.get('cursor', default=None, type=str)
         limit = request.args.get('limit', default=20, type=int)
         body = algo(cursor, limit)
+
+        # Log the did of the requester in the database on first request
+        if limit > 1 and cursor is None:
+            try:
+                requester_did = validate_auth(request)
+                logger.info(f'Authorized user: {requester_did}')
+                # Store the did in the database
+                Requests.create(indexed_at=datetime.now(timezone.utc), did=requester_did)
+            except AuthorizationError:
+                logger.debug('Unauthorized user')
     except ValueError:
         return 'Malformed cursor', 400
 

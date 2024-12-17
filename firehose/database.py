@@ -26,3 +26,8 @@ class SubscriptionState(BaseModel):
 class SessionState(BaseModel):
     service = peewee.CharField(unique=True)
     session_string = peewee.TextField(null=True)
+
+# table for storing dids
+class Requests(BaseModel):
+    indexed_at = peewee.DateTimeField(default=datetime.now(timezone.utc), index=True)
+    did = peewee.CharField(null=True, default=None, index=True)
