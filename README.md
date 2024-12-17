@@ -81,7 +81,7 @@ A specialized feed service for Brandon Sanderson's Cosmere universe fans, powere
    ```
    Edit `.env` with your settings:
    ```env
-   HOSTNAME=feed.yourdomain.com          # Your feed domain
+   HOSTNAME=feed.yourdomain.com          # Domain name for the feed
    HANDLE=your-handle.bsky.social        # A Bluesky handle for api access
    PASSWORD=your-password                # A Bluesky app password
    CHRONOLOGICAL_TRENDING_URI=           # Leave empty for now
@@ -151,8 +151,22 @@ A specialized feed service for Brandon Sanderson's Cosmere universe fans, powere
 
 3. Your feed should now be accessible at:
    ```
-   https://bsky.app/profile/[your-handle]/feed/[record-name]
+   http://localhost:8000/xrpc/app.bsky.feed.getFeedSkeleton?feed=[CHRONOLOGICAL_TRENDING_URI]&limit=30
    ```
+
+#### ⚙️ Access Configuration
+
+By default, the feed will be accessible at `http://localhost:8000`. For production deployment:
+- Deploy to a cloud provider like AWS, Azure, or Google Cloud with persistent storage for Docker volumes
+- Configure your domain's DNS records to point to the server
+- Use your domain `HOSTNAME` in the `.env` file
+
+Alternative methods:
+- Use [ngrok](https://ngrok.com/) for temporary public access
+   - Set the ngrok domain as `HOSTNAME` in `.env`
+- Set up [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps) for permanent local server access
+   - Point your domain to the Cloudflare Tunnel endpoint, and use your domain as `HOSTNAME` in `.env`
+
 
 </details>
 
