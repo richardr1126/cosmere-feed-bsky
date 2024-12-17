@@ -82,8 +82,8 @@ A specialized feed service for Brandon Sanderson's Cosmere universe fans, powere
    Edit `.env` with your settings:
    ```env
    HOSTNAME=feed.yourdomain.com          # Your feed domain
-   HANDLE=your-handle.bsky.social        # Your Bluesky handle
-   PASSWORD=your-password                # Your Bluesky password
+   HANDLE=your-handle.bsky.social        # A Bluesky handle for api access
+   PASSWORD=your-password                # A Bluesky app password
    CHRONOLOGICAL_TRENDING_URI=           # Leave empty for now
    POSTGRES_USER=postgres                # Postgres user to create
    POSTGRES_PASSWORD=your-db-password    # Postgres password to create and use
