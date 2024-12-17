@@ -71,8 +71,8 @@ A specialized feed service for Brandon Sanderson's Cosmere universe fans, powere
 
 1. Clone the repository
    ```shell
-   git clone [repository-url]
-   cd [repository-name]
+   git clone https://github.com/richardr1126/cosmere-feed-bsky.git
+   cd cosmere-feed-bsky/
    ```
 
 2. Create and configure environment variables
@@ -162,10 +162,11 @@ By default, the feed will be accessible at `http://localhost:8000`. For producti
 - Use your domain `HOSTNAME` in the `.env` file
 
 Alternative methods:
-- Use [ngrok](https://ngrok.com/) for temporary public access
+- Use free [ngrok](https://ngrok.com/) for temporary public access
    - Set the ngrok domain as `HOSTNAME` in `.env`
-- Set up [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps) for permanent local server access
+- Set up a free [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps) for permanent local server access
    - Point your domain to the Cloudflare Tunnel endpoint, and use your domain as `HOSTNAME` in `.env`
+   - Optioanlly setup your `docker compose up --build` as a systemctl service for automatic startup (need Linux)
 
 
 </details>
