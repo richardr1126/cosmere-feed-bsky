@@ -11,15 +11,12 @@
 
 </div>
 
----
-
 ## 📖 Overview 
 
 A specialized feed service for Brandon Sanderson's Cosmere universe fans, powered by the [AT Protocol SDK for Python](https://github.com/MarshalX/atproto). This service intelligently filters and combines trending and chronological posts to deliver a curated Cosmere content stream.
 
 > 💫 Built upon the original [Python feed generator](https://github.com/MarshalX/bluesky-feed-generator) by [@MarshalX](https://github.com/MarshalX).
 
----
 
 ## ✨ Features
 
@@ -44,9 +41,10 @@ A specialized feed service for Brandon Sanderson's Cosmere universe fans, powere
 
 > ⚠️ **Note:** Posts are retained for 30 days, with trending calculations based on 24-hour interaction windows
 
----
-
 ## 🎯 Filters
+
+<details open>
+<summary></summary>
 
 ### 🔤 Tokens
 - `allomancy`, `bondsmith`, `cosmere`, `dalinar`, `dawnshard`, `dragonsteel`, `dustbringer`, `edgedancer`, `elantris`, `elsecaller`, `stormblessed`, `thaidakar`, `kholin`, `lightweaver`, `mistborn`, `oathbringer`, `sanderlanche`, `sazed`, `shadesmar`, `skybreaker`, `spren`, `stoneward`, `stormlight`, `surgebinding`, `truthwatcher`, `warbreaker`, `willshaper`, `windrunner`, `roshar`, `scadrial`, `taldain`, `voidbringer`, `shardblade`, `shardplate`, `shardbearer`, `feruchemy`, `hemalurgy`, `lerasium`, `atium`, `mistcloak`, `kandra`, `koloss`, `skaa`, `highstorm`, `parshendi`, `urithiru`, `honorblade`, `surgebinder`, `dawnshard`, `worldhopper`, `perpendicularity`, `adonalsium`, `chasmfiend`, `worldbringer`, `allomancer`, `highspren`, `elantrian`, `inkspren`, `honorspren`, `cultivationspren`, `peakspren`, `ashspren`, `luckspren`, `windspren`, `lifespren`, `towerlight`, `voidlight`, `brandosando`, `numuhukumakiaki'ialunamor`, `dsnx24`, `dsnx2024`, `dragonsteelnexus`, `dragonsteelnexus2024`
@@ -59,6 +57,8 @@ A specialized feed service for Brandon Sanderson's Cosmere universe fans, powere
 
 ### 👥 Handles to Include
 - `stormlightmemes.bsky.social`, `brotherwisegames.bsky.social`
+
+</details>
 
 ---
 
