@@ -168,8 +168,8 @@ def _run(name, operations_callback, stream_stop_event=None):
             # Update the client's parameters with the new cursor
             client.update_params(models.ComAtprotoSyncSubscribeRepos.Params(cursor=commit.seq))
             # Persist the new cursor in the database
-            #with db.atomic():
-            SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
+            with db.atomic():
+                SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
                 
 
 
