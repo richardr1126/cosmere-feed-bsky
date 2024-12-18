@@ -4,11 +4,14 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - '.github/**'
-      - '.jpg'
-      - 'publish_feed.py'
-      - 'README.md'
+    paths:
+      - 'web/**'
+      - 'firehose/**'
+      - '.dockerignore'
+      - '.flaskenv'
+      - 'docker-compose.yml'
+      - 'Dockerfile'
+      - 'requirements.txt'
 
 jobs:
   deploy:
