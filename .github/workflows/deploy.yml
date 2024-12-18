@@ -19,18 +19,15 @@ jobs:
           wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb || sudo apt-get install -f -y
           cloudflared --version
-
+          
       - name: Execute Remote Script via SSH
         env:
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
         run: |
-        
-          # Create SSH command with properly quoted options
-          SSH_COMMAND=sshpass -p $SSH_PASSWORD ssh -o ProxyCommand=cloudflared access ssh --hostname $SSH_HOST -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST
-      
-          # Execute the remote script directly on the remote server
+          SSH_COMMAND="sshpass -p \"$SSH_PASSWORD\" ssh -o \"ProxyCommand=cloudflared access ssh --hostname $SSH_HOST\" -o StrictHostKeyChecking=no \"$SSH_USERNAME@$SSH_HOST\""
           $SSH_COMMAND 'bash ~/Documents/cosmere-feed-bsky/restart_script.sh'
+
 
 
