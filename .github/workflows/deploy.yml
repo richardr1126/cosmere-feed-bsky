@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '.jpg'
+      - 'publish_feed.py'
+      - 'README.md'
 
 jobs:
   deploy:
