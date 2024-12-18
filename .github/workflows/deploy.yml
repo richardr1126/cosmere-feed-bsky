@@ -30,6 +30,6 @@ jobs:
           SSH_COMMAND="sshpass -p $SSH_PASSWORD ssh -o ProxyCommand='cloudflared access ssh --hostname $SSH_HOST' -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST"
 
           # Execute the remote script
-          $SSH_COMMAND 'bash -s' < ~/Documents/cosmere-feed-bsky/restart_script.sh
+          $SSH_COMMAND 'bash ~/Documents/cosmere-feed-bsky/restart_script.sh'
 
 
