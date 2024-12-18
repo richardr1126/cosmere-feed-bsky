@@ -16,6 +16,9 @@ jobs:
       - name: Install cloudflared
         run: |
           sudo apt-get update
+          curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg > /dev/null
+          echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/ jammy main' | sudo tee /etc/apt/sources.list.d/cloudflare.list
+          sudo apt-get update
           sudo apt-get install -y cloudflared
 
       - name: Execute Remote Script via SSH
@@ -29,3 +32,4 @@ jobs:
 
           # Execute the remote script
           $SSH_COMMAND 'bash -s' < ~/Documents/cosmere-feed-bsky/restart_script.sh
+
