@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths-ignore:
+      - '.github/**'
       - '.jpg'
       - 'publish_feed.py'
       - 'README.md'
