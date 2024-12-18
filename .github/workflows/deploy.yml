@@ -1,0 +1,31 @@
+name: Deploy to local server on Push
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install cloudflared
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cloudflared
+
+      - name: Execute Remote Script via SSH
+        env:
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          # Create SSH command with ProxyCommand
+          SSH_COMMAND="sshpass -p $SSH_PASSWORD ssh -o ProxyCommand='cloudflared access ssh --hostname $SSH_HOST' -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST"
+
+          # Execute the remote script
+          $SSH_COMMAND 'bash -s' < ~/Documents/cosmere-feed-bsky/restart_script.sh
