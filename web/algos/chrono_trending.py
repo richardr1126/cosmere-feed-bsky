@@ -9,7 +9,7 @@ from firehose.utils.logger import logger
 uri = config.CHRONOLOGICAL_TRENDING_URI
 CURSOR_EOF = 'eof'
 
-TRENDING_THRESHOLD = 24  # Hours
+TRENDING_THRESHOLD = 72  # Hours
 INTERACTIONS_THRESHOLD = 10  # Minimum hot score for trending posts
 
 def encode_cursor(cursors: Dict[str, Optional[str]]) -> str:
