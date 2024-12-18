@@ -27,12 +27,7 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
         run: |
           which cloudflared
-          SSH_COMMAND="sshpass -p \"$SSH_PASSWORD\" ssh \
-            -o ProxyCommand=\"$(which cloudflared) access ssh --hostname %h\" \
+          sshpass -p "$SSH_PASSWORD" ssh \
+            -o 'ProxyCommand=/usr/local/bin/cloudflared access ssh --hostname %h' \
             -o StrictHostKeyChecking=no \
-            \"$SSH_USERNAME@$SSH_HOST\""
-          $SSH_COMMAND 'bash ~/Documents/cosmere-feed-bsky/restart_script.sh'
-
-
-
-
+            "$SSH_USERNAME@$SSH_HOST" 'bash ~/Documents/cosmere-feed-bsky/restart_script.sh'
