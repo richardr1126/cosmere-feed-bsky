@@ -54,7 +54,7 @@ def get_feed_skeleton():
         body = algo(cursor, limit)
 
         # Log the did of the requester in the database on first request
-        if limit > 1 and cursor is None:
+        if limit > 10 and cursor is None:
             try:
                 requester_did = validate_auth(request)
                 logger.info(f'Authorized user: {requester_did}')
