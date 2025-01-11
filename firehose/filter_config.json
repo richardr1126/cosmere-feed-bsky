@@ -4,7 +4,8 @@
         "brotherwisegames.bsky.social"
     ],
     "EXCLUDE_HANDLES": [
-        "flintds.bsky.social"
+        "flintds.bsky.social",
+        "simonm223.bsky.social"
     ],
     "PHRASES": [
         "17th shard",
@@ -141,6 +142,7 @@
         "sylvanna",
         "alleria",
         "uriele",
-        "mormon"
+        "mormon",
+        "BYU"
     ]
 }
