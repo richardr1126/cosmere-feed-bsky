@@ -11,7 +11,7 @@ services:
 
   firehose:
     container_name: firehose
-    image: richardr1126/firehose
+    image: richardr1126/cosmere-firehose
     build:
       context: ./firehose
     env_file:

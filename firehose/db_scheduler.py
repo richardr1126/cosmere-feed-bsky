@@ -69,8 +69,8 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25, schedu
     try:
         with db.connection_context():
             logger.info("Hydration Database connection opened.")
-            # get posts with uri and interactions
-            posts = Post.select(Post.uri, Post.interactions)
+            # get posts with uri and interactions from the last 7 days
+            posts = Post.select(Post.uri, Post.interactions).where(Post.indexed_at > (datetime.now() - timedelta(days=7)))
             uris = [post.uri for post in posts]
 
             if not uris:
@@ -134,7 +134,7 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25, schedu
                             posts_to_update.append(current_post)
                         
                     # pause the loop for 3 seconds
-                    time.sleep(3)
+                    #time.sleep(3)
 
                 except exceptions.AtProtocolError as api_err:
                     if api_err.response:

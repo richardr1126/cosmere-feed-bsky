@@ -3,6 +3,4 @@ peewee
 Flask
 python-dotenv
 gunicorn
-honcho
-apscheduler
 psycopg2-binary
