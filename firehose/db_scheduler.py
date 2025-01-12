@@ -70,7 +70,7 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25, schedu
         with db.connection_context():
             logger.info("Hydration Database connection opened.")
             # get posts with uri and interactions from the last 7 days
-            posts = Post.select(Post.uri, Post.interactions).where(Post.indexed_at > (datetime.now() - timedelta(days=7)))
+            posts = Post.select(Post.uri, Post.interactions).where(Post.indexed_at > (datetime.now() - timedelta(days=4)))
             uris = [post.uri for post in posts]
 
             if not uris:
@@ -162,7 +162,6 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25, schedu
                 try:
                     with db.atomic():
                         updated = Post.bulk_update(posts_to_update, fields=['interactions'])
-
                     logger.info(f"Hydrated {updated} posts with updated hot_scores.")
                 except Exception as e:
                     logger.error(f"Failed to bulk update posts: {e}")
