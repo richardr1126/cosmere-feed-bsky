@@ -34,10 +34,15 @@ A specialized feed service for Brandon Sanderson's Cosmere universe fans, powere
 
 - 📈 **Trending Posts Integration**
   - ⚖️ Interaction score calculation
-  - 🧹 Automated database cleanup via `apscheduler`
+  - 🧹 Automated database maintenance and post hydration
+  - ⏲️ Independent scheduler service for background tasks
 
 - 🐳 **Docker Compose Deployment**
-  - 🔄 Orchestrates `web`, `firehose`, and `postgres` services
+  - 🔄 Orchestrates `web`, `firehose`, `scheduler`, and `postgres` services
+  - 🕒 Scheduler runs independently for:
+    - Database cleanup and vacuuming
+    - Post interaction score updates
+    - Rate-limited post hydration
 
 > ⚠️ **Note:** Posts are retained for 30 days, with trending calculations based on 24-hour interaction windows
 
@@ -147,6 +152,10 @@ A specialized feed service for Brandon Sanderson's Cosmere universe fans, powere
    This launches:
    - PostgreSQL database (with persistence)
    - Firehose data stream processor
+   - Scheduler service handling:
+     - Daily database cleanup and vacuuming
+     - Periodic post interaction score updates
+     - Rate-limited post hydration
    - Feed generator web server (4 Gunicorn workers)
 
 3. Your feed should now be accessible at:
