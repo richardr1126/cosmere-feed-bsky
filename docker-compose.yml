@@ -20,6 +20,20 @@ services:
     tty: true
     depends_on:
       - postgres
+  
+  scheduler:
+    container_name: scheduler
+    image: richardr1126/cosmere-db-scheduler
+    build:
+      context: ./scheduler
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - firehose
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
 
   web:
     container_name: web

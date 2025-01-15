@@ -1,0 +1,5 @@
+atproto
+apscheduler
+peewee
+psycopg2-binary
+python-dotenv

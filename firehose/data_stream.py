@@ -10,10 +10,8 @@ from atproto import (
 )
 from atproto.exceptions import FirehoseError
 
-from database import SubscriptionState, db
-from utils.logger import logger
 from database import db, Post, SubscriptionState, SessionState, Requests
-import db_scheduler as db_scheduler
+from utils.logger import logger
 
 # Define the types of records we're interested in and their corresponding namespace IDs
 _INTERESTED_RECORDS = {
@@ -96,8 +94,6 @@ def run(name, operations_callback, stream_stop_event=None):
         db.connect()
         db.create_tables([Post, SubscriptionState, SessionState, Requests])
         logger.info("Database connected and tables created.")
-
-    db_scheduler.start()
 
     while stream_stop_event is None or not stream_stop_event.is_set():
         try:

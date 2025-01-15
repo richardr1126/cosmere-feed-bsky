@@ -4,7 +4,6 @@ from collections import defaultdict
 from atproto import models, Client, IdResolver
 from utils.logger import logger
 from database import db, Post
-from db_scheduler import init_client
 import json
 from pathlib import Path
 

@@ -8,21 +8,36 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 import peewee
 import time
+import signal
+import sys
 
 from utils.logger import logger
 from utils.config import HANDLE, PASSWORD
 from database import db, Post, SessionState
 
 # Main Function
-def start():
+def main():
     # Initialize Client
     client = init_client()
 
     # Start Scheduler
     scheduler = start_scheduler(client, schedule_hydration=True)
     
-    # for job in scheduler.get_jobs():
-    #     job.modify(next_run_time=datetime.now())  # Trigger all jobs immediately
+    for job in scheduler.get_jobs():
+        job.modify(next_run_time=datetime.now())  # Trigger all jobs immediately
+
+    # Handle graceful shutdown
+    def signal_handler(sig, frame):
+        logger.info("Shutting down scheduler...")
+        shutdown_scheduler(scheduler)
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    # Keep the main thread alive
+    while True:
+        signal.pause()  # Wait for signals
 
 # Postgres database management functions
 def clear_old_posts(clear_days: int):
@@ -324,3 +339,6 @@ def shutdown_scheduler(scheduler: BackgroundScheduler):
             logger.info("Database connection closed by force")
     except peewee.PeeweeException as e:
         logger.error(f"Error closing database: {e}")
+
+if __name__ == '__main__':
+    main()
