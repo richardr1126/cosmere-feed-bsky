@@ -21,7 +21,7 @@ services:
     tty: true
     restart: unless-stopped
     healthcheck:
-      test: ["python", "health_check.py"]
+      test: ["CMD", "python", "health_check.py"]
       interval: 60s
       timeout: 10s
       retries: 3
