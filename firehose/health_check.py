@@ -1,5 +1,4 @@
 # health_check.py
-from data_stream import is_healthy
 from utils.logger import logger
 from datetime import datetime, timedelta, timezone
 from database import db, SubscriptionState
