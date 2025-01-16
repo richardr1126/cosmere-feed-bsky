@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
 from atproto import (
     AtUri,
@@ -18,13 +18,6 @@ from utils.logger import logger
 _INTERESTED_RECORDS = {
     models.AppBskyFeedPost: models.ids.AppBskyFeedPost,
 }
-
-def is_healthy():
-    with db.connection_context():
-        state = SubscriptionState.get_or_none()
-        if not state or not state.last_indexed_at:
-            return False
-        return (datetime.now() - state.last_indexed_at) < timedelta(minutes=5)
 
 def _get_ops_by_type(commit: models.ComAtprotoSyncSubscribeRepos.Commit) -> defaultdict:
     """
@@ -174,7 +167,7 @@ def _run(name, operations_callback, stream_stop_event=None):
             with db.atomic():
                 SubscriptionState.update(
                     cursor=commit.seq,
-                    last_indexed_at=datetime.now()
+                    last_indexed_at=datetime.now(timezone.utc),
                 ).where(SubscriptionState.service == name).execute()
                 
 
