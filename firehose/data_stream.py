@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime, timedelta
 
 from atproto import (
     AtUri,
@@ -18,6 +19,12 @@ _INTERESTED_RECORDS = {
     models.AppBskyFeedPost: models.ids.AppBskyFeedPost,
 }
 
+LAST_INDEXED_AT = None
+
+def is_healthy():
+    if not LAST_INDEXED_AT:
+        return False
+    return (datetime.now() - LAST_INDEXED_AT) < timedelta(minutes=5)
 
 def _get_ops_by_type(commit: models.ComAtprotoSyncSubscribeRepos.Commit) -> defaultdict:
     """
@@ -166,8 +173,11 @@ def _run(name, operations_callback, stream_stop_event=None):
             # Persist the new cursor in the database
             with db.atomic():
                 SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
+            
+            # For health check
+            global LAST_INDEXED_AT
+            LAST_INDEXED_AT = datetime.now()
                 
-
 
         if not commit.blocks:
             # Skip if there are no blocks to process
