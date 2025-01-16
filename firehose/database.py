@@ -22,6 +22,7 @@ class Post(BaseModel):
 class SubscriptionState(BaseModel):
     service = peewee.CharField(unique=True)
     cursor = peewee.BigIntegerField()
+    last_indexed_at = peewee.DateTimeField(null=True, default=None)
 
 class SessionState(BaseModel):
     service = peewee.CharField(unique=True)

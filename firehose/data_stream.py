@@ -19,12 +19,12 @@ _INTERESTED_RECORDS = {
     models.AppBskyFeedPost: models.ids.AppBskyFeedPost,
 }
 
-LAST_INDEXED_AT = None
-
 def is_healthy():
-    if not LAST_INDEXED_AT:
-        return False
-    return (datetime.now() - LAST_INDEXED_AT) < timedelta(minutes=5)
+    with db.connection_context():
+        state = SubscriptionState.get_or_none()
+        if not state or not state.last_indexed_at:
+            return False
+        return (datetime.now() - state.last_indexed_at) < timedelta(minutes=5)
 
 def _get_ops_by_type(commit: models.ComAtprotoSyncSubscribeRepos.Commit) -> defaultdict:
     """
@@ -172,11 +172,10 @@ def _run(name, operations_callback, stream_stop_event=None):
             client.update_params(models.ComAtprotoSyncSubscribeRepos.Params(cursor=commit.seq))
             # Persist the new cursor in the database
             with db.atomic():
-                SubscriptionState.update(cursor=commit.seq).where(SubscriptionState.service == name).execute()
-            
-            # For health check
-            global LAST_INDEXED_AT
-            LAST_INDEXED_AT = datetime.now()
+                SubscriptionState.update(
+                    cursor=commit.seq,
+                    last_indexed_at=datetime.now()
+                ).where(SubscriptionState.service == name).execute()
                 
 
         if not commit.blocks:
