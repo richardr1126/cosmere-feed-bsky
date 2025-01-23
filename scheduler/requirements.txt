@@ -1,4 +1,4 @@
-atproto
+atproto==0.0.56
 apscheduler
 peewee
 psycopg2-binary
