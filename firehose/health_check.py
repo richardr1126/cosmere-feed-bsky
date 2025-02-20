@@ -11,7 +11,10 @@ def is_healthy():
 
     if not state or not state.last_indexed_at:
         return False
-    return (datetime.now(timezone.utc) - state.last_indexed_at) < timedelta(minutes=5)
+    
+    # Check if the firehose last log is within the last 15 minutes
+    # If it is, the health check is considered healthy
+    return (datetime.now(timezone.utc) - state.last_indexed_at) < timedelta(minutes=15)
 
 if __name__ == "__main__":
     if is_healthy():

@@ -22,10 +22,10 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "health_check.py"] # Command to check the container's health
-      interval: 60s # Time between each health check
-      timeout: 10s # Time allowed for the health check to complete
+      interval: 15m # Time between each health check
+      timeout: 30s # Time allowed for the health check to complete
       retries: 2 # Number of failed health checks before marking as unhealthy
-      start_period: 60s # Grace period before starting health checks after container starts
+      start_period: 60s # Time to wait before starting the health checks
     depends_on:
       - postgres
     labels:

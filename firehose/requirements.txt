@@ -1,4 +1,4 @@
 psycopg2-binary
-atproto==0.0.56
+atproto
 peewee
 python-dotenv

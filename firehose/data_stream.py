@@ -130,7 +130,7 @@ def _run(name, operations_callback, stream_stop_event=None):
         # If no state exists, create an initial subscription state with cursor 0
         SubscriptionState.create(service=name, cursor=0)
 
-    # Initialize the firehose client w/o a cursor for now
+    # Initialize the firehose client
     client = FirehoseSubscribeReposClient(params)
 
     def on_message_handler(message: firehose_models.MessageFrame) -> None:
@@ -163,7 +163,7 @@ def _run(name, operations_callback, stream_stop_event=None):
             logger.info(f'Cursor -> {commit.seq}')
             # Update the client's parameters with the new cursor
             client.update_params(models.ComAtprotoSyncSubscribeRepos.Params(cursor=commit.seq))
-            # Persist the new cursor in the database
+            # Persist the new cursor in the database with the last indexed timestamp
             with db.atomic():
                 SubscriptionState.update(
                     cursor=commit.seq,

@@ -1,4 +1,4 @@
-atproto==0.0.56
+atproto
 peewee
 Flask
 python-dotenv
