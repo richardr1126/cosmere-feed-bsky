@@ -1,6 +1,7 @@
 atproto
 peewee
 Flask
+flask-cors
 python-dotenv
 gunicorn
 psycopg2-binary

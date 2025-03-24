@@ -1,0 +1,4 @@
+#controller.publishService.enabled: true
+controller:
+  publishService:
+    enabled: true

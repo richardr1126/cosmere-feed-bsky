@@ -18,6 +18,7 @@ PASSWORD: str = os.getenv('PASSWORD')
 
 # Ex: feed.bsky.dev
 HOSTNAME: str = os.getenv('HOSTNAME')
+print(HOSTNAME)
 
 # A short name for the record that will show in urls
 # Lowercase with no spaces.

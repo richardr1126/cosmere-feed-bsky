@@ -1,0 +1,104 @@
+enableLoadBalancer: false
+
+tls:
+  enabled: false
+
+authCredentials:
+  ysql:
+    user: "cosmerefeed"
+    password: "pass"
+
+master:
+  readinessProbe:
+    enabled: true
+
+tserver:
+  readinessProbe:
+    enabled: true
+
+storage:
+  master:
+    count: 1
+    size: 20Gi
+  tserver:
+    count: 1
+    size: 20Gi
+
+resource:
+  master:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1
+      memory: 1.5Gi
+  tserver:
+    requests:
+      cpu: 500m
+      memory: 1.5Gi
+    limits:
+      cpu: 1
+      memory: 2Gi
+
+replicas:
+  master: 3
+  tserver: 3
+
+partition:
+  master: 3
+  tserver: 3
+
+yugabytedUi:
+  enabled: false
+
+# serviceEndpoints:
+#   - name: "yb-master-ui"
+#     type: ClusterIP
+#     scope: "AZ"
+#     annotations: {}
+#     app: "yb-master"
+#     ports:
+#       http-ui: "7000"
+
+#   - name: "yb-tserver-service"
+#     type: ClusterIP
+#     scope: "AZ"
+#     annotations: {}
+#     app: "yb-tserver"
+#     ports:
+#       tcp-yql-port: "9042"
+#       tcp-yedis-port: "6379"
+#       tcp-ysql-port: "5433"
+
+#   - name: "yugabyted-ui-service"
+#     type: ClusterIP
+#     scope: "AZ"
+#     annotations: {}
+#     app: "yb-master"
+#     ports:
+#       yugabyted-ui: "15433"
+
+# Services:
+#   - name: "yb-masters"
+#     label: "yb-master"
+#     skipHealthChecks: false
+#     memory_limit_to_ram_ratio: 0.85
+#     ports:
+#       http-ui: "7000"
+#       tcp-rpc-port: "7100"
+#       yugabyted-ui: "15433"
+
+#   - name: "yb-tservers"
+#     label: "yb-tserver"
+#     skipHealthChecks: false
+#     ports:
+#       http-ui: "9000"
+#       tcp-rpc-port: "9100"
+#       tcp-yql-port: "9042"
+#       tcp-yedis-port: "6379"
+#       tcp-ysql-port: "5433"
+#       http-ycql-met: "12000"
+#       http-yedis-met: "11000"
+#       http-ysql-met: "13000"
+#       grpc-ybc-port: "18018"
+#       yugabyted-ui: "15433"

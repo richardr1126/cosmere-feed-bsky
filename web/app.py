@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from firehose.utils import config
 from firehose.utils.logger import logger
 from web.algos import algos
@@ -7,6 +8,7 @@ from web.auth import AuthorizationError, validate_auth
 from web.database_ro import Requests
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/')
 def index():
@@ -43,6 +45,10 @@ def describe_feed_generator():
 
 @app.route('/xrpc/app.bsky.feed.getFeedSkeleton', methods=['GET'])
 def get_feed_skeleton():
+    # Add timeout handling
+    if request.environ.get('wsgi.multithread'):
+        request.environ['wsgi.input'].set_timeout(10)  # 10 second timeout
+        
     feed = request.args.get('feed', default=None, type=str)
     algo = algos.get(feed)
     if not algo:

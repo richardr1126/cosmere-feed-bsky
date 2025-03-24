@@ -47,11 +47,45 @@ def handler(cursor: Optional[str], limit: int) -> dict:
             'feed': [{'post': latest_post.uri}] if latest_post else []
         }
 
-
     try:
         # Define time thresholds
         now = datetime.now(timezone.utc)
         trending_threshold = now - timedelta(hours=TRENDING_THRESHOLD)
+
+        # Initialize cursors
+        if cursor == CURSOR_EOF:
+            return {'cursor': CURSOR_EOF, 'feed': []}
+
+        if cursor:
+            try:
+                cursors = decode_cursor(cursor)
+                main_cursor = cursors.get('main_posts')
+                trending_posts_offset = int(cursors.get('trending_posts_offset', 0))
+            except (ValueError, json.JSONDecodeError) as e:
+                logger.error(f"Malformed cursor: {cursor}. Error: {e}")
+                return {
+                    'cursor': CURSOR_EOF,
+                    'feed': [],
+                    'error': 'Malformed cursor.'
+                }
+        else:
+            cursors = {}
+            main_cursor = None
+            trending_posts_offset = 0
+
+        # Check if we've already seen all trending posts
+        if trending_posts_offset > 0:
+            total_trending_posts = (Post.select()
+                .where(
+                    (Post.indexed_at > trending_threshold) &
+                    (Post.interactions >= INTERACTIONS_THRESHOLD)
+                )
+                .count())
+            
+            if trending_posts_offset >= total_trending_posts:
+                trending_posts_offset = 0  # Reset to start
+                if main_cursor is None:  # If we've also seen all main posts
+                    return {'cursor': CURSOR_EOF, 'feed': []}
 
         # Define interleaving pattern
         pattern = [
@@ -218,33 +252,22 @@ def handler(cursor: Optional[str], limit: int) -> dict:
         # Build the feed
         feed = [{'post': post.uri} for post in unique_posts]
 
+        # Update cursor generation logic
         new_cursors = {}
-        for category, post in last_fetched.items():
-            if category == 'main_posts' and post:
-                # Corrected multiplication by using timestamp()
-                timestamp = datetime.fromisoformat(str(post.indexed_at)).timestamp()*1000
-                new_cursors[category] = f'{timestamp}::{post.cid}'
-            elif category == 'trending_posts' and post:
-                # Update the offset based on the number of trending_posts fetched
-                new_cursors['trending_posts_offset'] = trending_posts_offset + trending_count
+        total_posts = len(unique_posts)
         
-        # Encode the new cursor
-        if new_cursors:
-            new_cursor = encode_cursor(new_cursors)
+        if total_posts < limit:
+            # If we got fewer posts than requested, we've reached the end
+            new_cursor = CURSOR_EOF
         else:
-            new_cursor = CURSOR_EOF
-
-        # Determine if more posts exist for each category
-        def has_more_posts(query, needed):
-            return query.limit(needed).count() > 0
-
-        more_trending = len(trending_posts) == limit  # If fetched 'limit' trending_posts, assume more exist
-        more_main = has_more_posts(main_posts_query, 1)
-
-        if not (more_trending or more_main):
-            new_cursor = CURSOR_EOF
-
-        logger.info(f"Next cursor set to: {new_cursor}")
+            for category, post in last_fetched.items():
+                if category == 'main_posts' and post:
+                    timestamp = datetime.fromisoformat(str(post.indexed_at)).timestamp()*1000
+                    new_cursors[category] = f'{timestamp}::{post.cid}'
+                elif category == 'trending_posts' and post:
+                    new_cursors['trending_posts_offset'] = trending_posts_offset + trending_count
+            
+            new_cursor = encode_cursor(new_cursors) if new_cursors else CURSOR_EOF
 
         return {
             'cursor': new_cursor,

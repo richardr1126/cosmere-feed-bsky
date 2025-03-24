@@ -7,15 +7,19 @@ PASSWORD = os.environ.get('PASSWORD', None)
 POSTGRES_USER = os.environ.get('POSTGRES_USER', None)
 POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD', None)
 POSTGRES_DB = os.environ.get('POSTGRES_DB', None)
+POSTGRES_HOST = os.environ.get('POSTGRES_HOST', None)
+POSTGRES_PORT = os.environ.get('POSTGRES_PORT', None)
 
 if POSTGRES_USER is None:
     raise RuntimeError('You should set "POSTGRES_USER" environment variable first.')
-
 if POSTGRES_PASSWORD is None:
     raise RuntimeError('You should set "POSTGRES_PASSWORD" environment variable first.')
-
 if POSTGRES_DB is None:
     raise RuntimeError('You should set "POSTGRES_DB" environment variable first.')
+if POSTGRES_HOST is None:
+    raise RuntimeError('You should set "POSTGRES_HOST" environment variable first.')
+if POSTGRES_PORT is None:
+    raise RuntimeError('You should set "POSTGRES_PORT" environment variable first.')
 
 if HOSTNAME is None:
     raise RuntimeError('You should set "HOSTNAME" environment variable first.')

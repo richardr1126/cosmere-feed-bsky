@@ -1,0 +1,6 @@
+provider: cloudflare
+
+# secret contains cloudflare_api_token
+cloudflare:
+  proxied: true
+  secretName: cloudflare-dns
