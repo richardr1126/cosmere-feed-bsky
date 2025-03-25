@@ -6,7 +6,6 @@ tls:
 authCredentials:
   ysql:
     user: "cosmerefeed"
-    password: "pass"
 
 master:
   readinessProbe:
@@ -19,25 +18,26 @@ tserver:
 storage:
   master:
     count: 1
-    size: 20Gi
+    size: 10Gi
   tserver:
     count: 1
-    size: 20Gi
+    size: 10Gi
+
 
 resource:
   master:
     requests:
-      cpu: 500m
+      cpu: 1
       memory: 1Gi
     limits:
-      cpu: 1
-      memory: 1.5Gi
+      cpu: 2
+      memory: 1Gi
   tserver:
     requests:
-      cpu: 500m
-      memory: 1.5Gi
-    limits:
       cpu: 1
+      memory: 2Gi
+    limits:
+      cpu: 2
       memory: 2Gi
 
 replicas:
@@ -47,9 +47,6 @@ replicas:
 partition:
   master: 3
   tserver: 3
-
-yugabytedUi:
-  enabled: false
 
 # serviceEndpoints:
 #   - name: "yb-master-ui"

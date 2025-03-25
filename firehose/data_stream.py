@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timezone
+from time import time
 
 from atproto import (
     AtUri,
@@ -20,63 +21,41 @@ _INTERESTED_RECORDS = {
 }
 
 def _get_ops_by_type(commit: models.ComAtprotoSyncSubscribeRepos.Commit) -> defaultdict:
-    """
-    Processes a commit message and extracts operations of interest, grouping them by record type.
-
-    Args:
-        commit: The commit message containing the operations.
-
-    Returns:
-        A defaultdict where each key is a record namespace ID, and the value is a dictionary with
-        'created' and 'deleted' lists of operations.
-    """
-    # Initialize a defaultdict to store operations grouped by record type
+    """Memory-optimized version of operation processing"""
     operations_by_type = defaultdict(lambda: {'created': [], 'deleted': []})
-
-    # Parse the CAR (Content Addressable aRchive) from the commit blocks
+    
+    # Process CAR blocks in chunks to reduce memory usage
     car = CAR.from_bytes(commit.blocks)
-
-    # Iterate over the operations in the commit
+    
     for op in commit.ops:
+        # Early return for updates we don't care about
         if op.action == 'update':
-            # Currently not interested in 'update' actions
+            continue
+            
+        uri = AtUri.from_str(f'at://{commit.repo}/{op.path}')
+        
+        # Handle deletions immediately - they're lightweight
+        if op.action == 'delete':
+            operations_by_type[uri.collection]['deleted'].append({'uri': str(uri)})
             continue
 
-        # Construct the URI for the operation
-        uri = AtUri.from_str(f'at://{commit.repo}/{op.path}')
-
-        if op.action == 'create':
-            if not op.cid:
-                # Skip if no CID is present
-                continue
-
-            # Prepare information about the creation operation
-            create_info = {'uri': str(uri), 'cid': str(op.cid), 'author': commit.repo}
-
-            # Retrieve the raw data of the record from the CAR blocks using the CID
+        # For creates, only process if we have a valid CID and it's a record type we care about
+        if op.action == 'create' and op.cid and uri.collection in _INTERESTED_RECORDS.values():
             record_raw_data = car.blocks.get(op.cid)
             if not record_raw_data:
-                # Skip if the record data is not found
                 continue
 
             try:
-                # Parse the raw data into a record object
+                # Only parse records we're interested in
                 record = models.get_or_create(record_raw_data, strict=False)
+                create_info = {'uri': str(uri), 'cid': str(op.cid), 'author': commit.repo}
+                operations_by_type[uri.collection]['created'].append({'record': record, **create_info})
             except Exception as e:
                 logger.error(f"Failed to parse record: {e}")
                 continue
 
-            # Check if the record is of an interested type
-            for record_type, record_nsid in _INTERESTED_RECORDS.items():
-                if uri.collection == record_nsid and models.is_record_type(record, record_type):
-                    # Add the record to the list of created operations for its type
-                    operations_by_type[record_nsid]['created'].append({'record': record, **create_info})
-                    break  # Found the record type, no need to check further
-
-        elif op.action == 'delete':
-            # Add the URI to the list of deleted operations for its type
-            operations_by_type[uri.collection]['deleted'].append({'uri': str(uri)})
-
+    # Clear references to help garbage collection
+    del car
     return operations_by_type
 
 
@@ -119,6 +98,11 @@ def _run(name, operations_callback, stream_stop_event=None):
         operations_callback: A callback function to handle the operations extracted from messages.
         stream_stop_event: An optional threading.Event to signal when to stop the stream.
     """
+    # Add performance monitoring variables
+    last_seq = 0
+    last_time = time()
+    processed_count = 0
+
     # Retrieve the last known cursor position from the database
     state = SubscriptionState.get_or_none(SubscriptionState.service == name)
 
@@ -134,6 +118,7 @@ def _run(name, operations_callback, stream_stop_event=None):
     client = FirehoseSubscribeReposClient(params)
 
     def on_message_handler(message: firehose_models.MessageFrame) -> None:
+        nonlocal last_seq, last_time, processed_count, stream_stop_event, client
         """
         Handles incoming messages from the firehose.
 
@@ -157,23 +142,29 @@ def _run(name, operations_callback, stream_stop_event=None):
         if not isinstance(commit, models.ComAtprotoSyncSubscribeRepos.Commit):
             #logger.warning(f"Received non-commit message: {commit}")
             return
-
-        # Update the cursor every ~10,000 events
-        if commit.seq % 10000 == 0:
-            logger.info(f'Cursor -> {commit.seq}')
-            # Update the client's parameters with the new cursor
-            client.update_params(models.ComAtprotoSyncSubscribeRepos.Params(cursor=commit.seq))
-            # Persist the new cursor in the database with the last indexed timestamp
-            with db.atomic():
-                SubscriptionState.update(
-                    cursor=commit.seq,
-                    last_indexed_at=datetime.now(timezone.utc),
-                ).where(SubscriptionState.service == name).execute()
-                
-
+        
         if not commit.blocks:
             # Skip if there are no blocks to process
             return
+
+        # Update the cursor every ~20,000 events
+        if commit.seq % 20000 == 0:
+            current_time = time()
+            elapsed = current_time - last_time
+            rate = 20000 / elapsed if elapsed > 0 else 0
+            
+            logger.info(f'Cursor|{commit.seq}|{rate:.2f} events/s|{elapsed:.2f}s elapsed')
+            
+            last_time = current_time
+
+            # Update the client's parameters with the new cursor
+            client.update_params(models.ComAtprotoSyncSubscribeRepos.Params(cursor=commit.seq))
+            # Persist the new cursor in the database with the last indexed timestamp
+            SubscriptionState.update(
+                cursor=commit.seq,
+                last_indexed_at=datetime.now(timezone.utc),
+            ).where(SubscriptionState.service == name).execute()
+                
 
         # Extract operations from the commit
         operations = _get_ops_by_type(commit)

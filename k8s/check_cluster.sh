@@ -1,3 +1,4 @@
+export KUBECONFIG=~/.kube/rckspc-personal-kubeconfig.yaml
 kubectl get pods --namespace cert-manager
 kubectl get pods --namespace yugabyte
 kubectl get pods    # Check pod status

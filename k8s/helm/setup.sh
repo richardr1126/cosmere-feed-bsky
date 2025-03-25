@@ -63,6 +63,7 @@ if [ "$BUILD_WEB" = true ] || [ "$BUILD_FIREHOSE" = true ] || [ "$BUILD_SCHEDULE
   docker login ghcr.io -u richardr1126 -p $GITHUB_PAT
 
   if [ "$BUILD_WEB" = true ]; then
+    helm uninstall web --wait --ignore-not-found
     echo "Building and pushing web API image..."
     docker buildx build \
       --platform linux/amd64,linux/arm64 \
@@ -76,6 +77,7 @@ if [ "$BUILD_WEB" = true ] || [ "$BUILD_FIREHOSE" = true ] || [ "$BUILD_SCHEDULE
   fi
 
   if [ "$BUILD_FIREHOSE" = true ]; then
+    helm uninstall firehose --wait --ignore-not-found
     echo "Building and pushing firehose image..."
     docker buildx build \
       --platform linux/amd64,linux/arm64 \
@@ -89,6 +91,7 @@ if [ "$BUILD_WEB" = true ] || [ "$BUILD_FIREHOSE" = true ] || [ "$BUILD_SCHEDULE
   fi
 
   if [ "$BUILD_SCHEDULER" = true ]; then
+    helm uninstall scheduler --wait --ignore-not-found
     echo "Building and pushing scheduler image..."
     docker buildx build \
       --platform linux/amd64,linux/arm64 \

@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 import peewee
-from firehose.database import Post as OldPost
 
 # Old Postgres connection
 old_db = peewee.PostgresqlDatabase(
@@ -21,6 +20,30 @@ new_db = peewee.PostgresqlDatabase(
 )
 
 
+class OldPost(peewee.Model):
+    uri = peewee.CharField(index=True)
+    cid = peewee.CharField()
+    reply_parent = peewee.CharField(null=True, default=None)
+    reply_root = peewee.CharField(null=True, default=None)
+    indexed_at = peewee.DateTimeField(default=datetime.now(timezone.utc), index=True)
+    author = peewee.CharField(null=True, default=None, index=True)
+    interactions = peewee.BigIntegerField(default=0, index=True)
+
+    class Meta:
+        database = old_db
+        db_table = "post"
+
+# table for storing dids
+class OldRequests(peewee.Model):
+    indexed_at = peewee.DateTimeField(default=datetime.now(timezone.utc), index=True)
+    did = peewee.CharField(null=True, default=None, index=True)
+
+    class Meta:
+        database = old_db
+        db_table = "requests"
+
+
+
 # Define the same Post model for the new DB
 class NewPost(peewee.Model):
     uri = peewee.CharField(index=True)
@@ -33,17 +56,28 @@ class NewPost(peewee.Model):
 
     class Meta:
         database = new_db
+        db_table = "post"
 
+
+# Define the Requests model for the new DB
+class NewRequests(peewee.Model):
+    indexed_at = peewee.DateTimeField(default=datetime.now(timezone.utc), index=True)
+    did = peewee.CharField(null=True, default=None, index=True)
+
+    class Meta:
+        database = new_db
+        db_table = "requests"
 
 def migrate_data():
     # Create tables in new DB
     new_db.connect()
-    new_db.create_tables([NewPost])
+    new_db.create_tables([NewPost, NewRequests])
 
     # Connect to old DB
     old_db.connect()
 
-    # Migrate in batches
+    # Migrate Posts in batches
+    print("Migrating Posts...")
     batch_size = 1000
     last_id = 0
 
@@ -55,6 +89,7 @@ def migrate_data():
             .limit(batch_size)
         )
 
+        posts = list(posts)
         if not posts:
             break
 
@@ -71,8 +106,35 @@ def migrate_data():
                 )
                 last_id = post.id
 
-        print(f"Migrated batch up to ID {last_id}")
+        print(f"Migrated posts batch up to ID {last_id}")
 
+    # Migrate Requests in batches
+    print("\nMigrating Requests...")
+    last_request_id = 0
+
+    while True:
+        requests = (
+            OldRequests.select()
+            .where(OldRequests.id > last_request_id)
+            .order_by(OldRequests.id)
+            .limit(batch_size)
+        )
+
+        requests = list(requests)
+        if not requests:
+            break
+
+        with new_db.atomic():
+            for request in requests:
+                NewRequests.create(
+                    indexed_at=request.indexed_at,
+                    did=request.did
+                )
+                last_request_id = request.id
+
+        print(f"Migrated requests batch up to ID {last_request_id}")
+
+    print("\nMigration completed successfully!")
 
 if __name__ == "__main__":
     migrate_data()

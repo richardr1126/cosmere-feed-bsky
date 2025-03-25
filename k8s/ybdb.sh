@@ -1,0 +1,2 @@
+export KUBECONFIG=~/.kube/rckspc-personal-kubeconfig.yaml
+kubectl exec --namespace yugabyte -it yb-tserver-0 -- /home/yugabyte/bin/ysqlsh -h yb-tserver-0.yb-tservers.yugabyte -U cosmerefeed -d cosmerefeed
