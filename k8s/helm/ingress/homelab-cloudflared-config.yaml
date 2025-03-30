@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudflared-config
+data:
+  config.yaml: |
+    tunnel: d2fada6d-89c0-473e-a5f2-4625b2b5576d
+    credentials-file: /etc/cloudflared/creds/credentials.json
+    ingress:
+      - hostname: cosmere.richardr.dev
+        service: http://192.168.0.69:80
+      - service: http_status:404

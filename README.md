@@ -106,7 +106,7 @@ GITHUB_PAT=your-github-pat
 CLOUDFLARE_API_TOKEN=your-cloudflare-token
 ```
 
-### Deployment Steps
+### Cloud Deployment
 
 1. **Initialize Cluster Components**
 ```bash
@@ -133,6 +133,71 @@ This will display the status of:
 ./setup.sh --build-firehose
 ./setup.sh --build-scheduler
 ```
+
+### Local Raspberry Pi Deployment
+
+#### Prerequisites
+- Raspberry Pi 4 (recommended 4GB+ RAM)
+- Ubuntu Server or Raspberry Pi OS
+- `k3sup` installed on your local machine
+- `kubectl` installed on your local machine
+
+#### K3s Cluster Setup
+
+1. **Install K3s Server Node**
+```bash
+k3sup install \  
+--ip 192.168.0.18 \
+--tls-san 192.168.0.40 \
+--cluster \
+--k3s-extra-args '--disable servicelb traefik' \
+--local-path ~/.kube/config \
+--user richard-roberson
+```
+> Note you might need to manually remove all traefik deployments, pods, and services. This is due to the fact that k3sup will install traefik by default.
+
+2. **Configure Virtual IP with kube-vip**
+
+SSH into the K3s server node and setup kube-vip:
+```bash
+# Create manifests directory
+sudo mkdir -p /var/lib/rancher/k3s/server/manifests/
+
+# Download and apply RBAC configuration
+sudo curl https://kube-vip.io/manifests/rbac.yaml | sudo tee /var/lib/rancher/k3s/server/manifests/kube-vip.yaml > /dev/null
+echo -e "\n---" | sudo tee -a /var/lib/rancher/k3s/server/manifests/kube-vip.yaml
+
+# Configure and deploy kube-vip
+export VIP=192.168.0.40
+export INTERFACE=eth0
+KVVERSION=$(curl -sL https://api.github.com/repos/kube-vip/kube-vip/releases | jq -r ".[0].name")
+
+alias kube-vip="sudo ctr image pull ghcr.io/kube-vip/kube-vip:$KVVERSION; sudo ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:$KVVERSION vip /kube-vip"
+
+kube-vip manifest daemonset \
+  --interface $INTERFACE \
+  --address $VIP \
+  --inCluster \
+  --taint \
+  --controlplane \
+  --services \
+  --arp \
+  --leaderElection | sudo tee -a /var/lib/rancher/k3s/server/manifests/kube-vip.yaml
+```
+
+3. **Setup kube-vip Cloud Provider**
+```bash
+# Deploy the cloud controller
+kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml
+
+# Configure IP range for services
+kubectl create configmap -n kube-system kubevip --from-literal range-global=192.168.0.69-192.168.0.79
+```
+
+The local deployment will use:
+- Virtual IP (kube-vip): 192.168.0.40 for the control plane
+- Service IP Range: 192.168.0.69-192.168.0.79
+- Cloudflare Tunnel for secure external access
 
 ## 📡 Service Endpoints
 

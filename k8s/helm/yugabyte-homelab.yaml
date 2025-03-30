@@ -1,0 +1,38 @@
+tls:
+  enabled: false
+
+authCredentials:
+  ysql:
+    user: "cosmerefeed"
+
+storage:
+  master:
+    count: 1
+    size: 10Gi
+  tserver:
+    count: 1
+    size: 10Gi
+
+resource:
+  master:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1500m
+      memory: 1Gi
+  tserver:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+    limits:
+      cpu: 1500m
+      memory: 2Gi
+
+replicas:
+  master: 1
+  tserver: 1
+
+partition:
+  master: 1
+  tserver: 1
