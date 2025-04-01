@@ -52,6 +52,20 @@ if [ "$CLEAR" = true ]; then
   kubectl delete crd issuers.cert-manager.io --ignore-not-found
   kubectl delete crd orders.acme.cert-manager.io --ignore-not-found
 
+  echo "Deleting kube-prometheus-stack"
+  helm uninstall prometheus --namespace monitoring --wait --ignore-not-found
+  kubectl delete crd alertmanagerconfigs.monitoring.coreos.com
+  kubectl delete crd alertmanagers.monitoring.coreos.com
+  kubectl delete crd podmonitors.monitoring.coreos.com
+  kubectl delete crd probes.monitoring.coreos.com
+  kubectl delete crd prometheusagents.monitoring.coreos.com
+  kubectl delete crd prometheuses.monitoring.coreos.com
+  kubectl delete crd prometheusrules.monitoring.coreos.com
+  kubectl delete crd scrapeconfigs.monitoring.coreos.com
+  kubectl delete crd servicemonitors.monitoring.coreos.com
+  kubectl delete crd thanosrulers.monitoring.coreos.com
+  kubectl delete namespace monitoring --wait --ignore-not-found
+
   echo "Deleting YugabyteDB CRDs..."
   kubectl delete crd ybclusters.yugabyte.com --ignore-not-found
 
@@ -83,6 +97,7 @@ if [ "$LONG" = true ]; then
   helm repo add jetstack https://charts.jetstack.io
   helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
   helm repo add yugabytedb https://charts.yugabyte.com
+  helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
   helm repo update
 
   # Install cert-manager for Let's Encrypt
@@ -132,7 +147,7 @@ fi
 echo "Installing YugabyteDB..."
 # helm install yb-demo yugabytedb/yugabyte --version 2.25.0 --namespace yb-demo --wait
 helm upgrade --install yugabyte yugabytedb/yugabyte --namespace yugabyte --create-namespace \
-  -f yugabyte-values.yaml \
+  -f yugabyte-homelab.yaml \
   --wait \
   --timeout 30m
 
@@ -160,5 +175,15 @@ kubectl apply -f ./ingress/homelab-cloudflared-config.yaml
 kubectl apply -f ./ingress/homelab-cloudflared-deployment.yaml
 
 
+# Install kube-prometheus-stack
+echo "Installing kube-prometheus-stack..."
+helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+  -f ./kube-prometheus-stack-values.yaml \
+  --namespace monitoring \
+  --create-namespace \
+  --wait
+
+echo "Grafana admin password:"
+kubectl --namespace monitoring get secrets prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d ; echo
 
 echo "Setup complete!"

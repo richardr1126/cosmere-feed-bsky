@@ -1,0 +1,11 @@
+namespaceOverride: "monitoring"
+
+grafana:
+  adminUser: admin
+  adminPassword: prom-operator
+
+
+prometheusOperator:
+  admissionWebhooks:
+    certManager:
+      enabled: true
