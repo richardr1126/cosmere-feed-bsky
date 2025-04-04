@@ -4,18 +4,18 @@ import peewee
 # Old Postgres connection
 old_db = peewee.PostgresqlDatabase(
     "cosmerefeed",
-    user="admin-richard",
-    password="xxx",
-    host="192.168.0.11",  # If using docker-compose
-    port=5432,
+    user="cosmerefeed",  # From postgres-values.yaml
+    password="xxxxxx",
+    host="localhost",  # If using docker-compose
+    port=5433,
 )
 
 # New YugabyteDB connection
 new_db = peewee.PostgresqlDatabase(
     "cosmerefeed",
     user="cosmerefeed",  # From yugabyte-values.yaml
-    password="xxx",
-    host="localhost",
+    password="xxxx",
+    host="192.168.0.72",
     port=5433,  # YugabyteDB default port
 )
 

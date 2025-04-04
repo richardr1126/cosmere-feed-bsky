@@ -4,6 +4,9 @@ grafana:
   adminUser: admin
   adminPassword: prom-operator
 
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
 
 prometheusOperator:
   admissionWebhooks:
