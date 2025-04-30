@@ -98,6 +98,7 @@ if [ "$LONG" = true ]; then
   helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
   helm repo add yugabytedb https://charts.yugabyte.com
   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+  helm repo add grafana https://grafana.github.io/helm-charts
   helm repo update
 
   # Install cert-manager for Let's Encrypt
@@ -143,6 +144,21 @@ if [ "$LONG" = true ]; then
     
 fi
 
+# Install kube-prometheus-stack
+echo "Installing kube-prometheus-stack..."
+helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+  -f ./kube-prometheus-stack-values.yaml \
+  --namespace monitoring \
+  --create-namespace \
+  --wait
+
+# Install Loki
+echo "Installing Loki..."
+helm upgrade --install loki grafana/loki-stack \
+  --namespace monitoring \
+  --set loki.isDefault=false \
+  --wait 
+
 # Install yugabytedb
 echo "Installing YugabyteDB..."
 # helm install yb-demo yugabytedb/yugabyte --version 2.25.0 --namespace yb-demo --wait
@@ -167,21 +183,12 @@ helm upgrade --install scheduler ./scheduler \
 
 # Setup Cloudflared
 # Import cloudflared tunnel credentials
-echo "Importing cloudflared tunnel credentials..."
-kubectl create secret generic tunnel-credentials \
-  --from-file=credentials.json=/home/richard-roberson/.cloudflared/d2fada6d-89c0-473e-a5f2-4625b2b5576d.json
+# echo "Importing cloudflared tunnel credentials..."
+# kubectl create secret generic tunnel-credentials \
+#   --from-file=credentials.json=/home/richard-roberson/.cloudflared/d2fada6d-89c0-473e-a5f2-4625b2b5576d.json
 
-kubectl apply -f ./ingress/homelab-cloudflared-config.yaml
-kubectl apply -f ./ingress/homelab-cloudflared-deployment.yaml
-
-
-# Install kube-prometheus-stack
-echo "Installing kube-prometheus-stack..."
-helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
-  -f ./kube-prometheus-stack-values.yaml \
-  --namespace monitoring \
-  --create-namespace \
-  --wait
+# kubectl apply -f ./ingress/homelab-cloudflared-config.yaml
+# kubectl apply -f ./ingress/homelab-cloudflared-deployment.yaml
 
 echo "Grafana admin password:"
 kubectl --namespace monitoring get secrets prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d ; echo

@@ -3,6 +3,22 @@ namespaceOverride: "monitoring"
 grafana:
   adminUser: admin
   adminPassword: prom-operator
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      #cert-manager.io/cluster-issuer: letsencrypt-prod
+      external-dns.alpha.kubernetes.io/hostname: metrics.richardr.dev
+      external-dns.alpha.kubernetes.io/target: 71.218.121.109
+      external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+    hosts:
+      - metrics.richardr.dev
+    pathType: Prefix
+    path: /
+    # tls:
+    # - secretName: prometheus-grafana-tls
+    #   hosts:
+    #   - metrics.richardr.dev
 
 prometheus:
   prometheusSpec:

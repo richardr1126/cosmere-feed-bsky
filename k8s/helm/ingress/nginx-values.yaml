@@ -1,4 +1,7 @@
 #controller.publishService.enabled: true
 controller:
+  # service:
+  #   annotations:
+  #     kube-vip.io/forwardUPNP: "true"
   publishService:
     enabled: true

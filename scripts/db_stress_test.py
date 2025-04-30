@@ -12,7 +12,7 @@ import sys
 db = peewee.PostgresqlDatabase(
     "cosmerefeed",
     user="cosmerefeed",
-    password="xxxxx",
+    password="Carlton@1126$",
     host="192.168.0.72",
     port=5433,
 )

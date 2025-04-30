@@ -2,12 +2,16 @@ ingress:
   enabled: true
   className: "nginx"
   annotations:
-    cert-manager.io/cluster-issuer: ""
-    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
+    #cert-manager.io/cluster-issuer: letsencrypt-prod
     external-dns.alpha.kubernetes.io/hostname: cosmere.richardr.dev
-    external-dns.alpha.kubernetes.io/target: d2fada6d-89c0-473e-a5f2-4625b2b5576d.cfargotunnel.com
+    external-dns.alpha.kubernetes.io/target: 71.218.121.109
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
   hosts:
-    - ip: 192.168.0.69
+    - host: cosmere.richardr.dev
       paths:
         - path: /
           pathType: Prefix
+  # tls:
+  #   - secretName: web-tls
+  #     hosts:
+  #       - cosmere.richardr.dev
