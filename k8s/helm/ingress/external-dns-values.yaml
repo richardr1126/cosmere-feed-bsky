@@ -1,6 +1,12 @@
-provider: cloudflare
+provider:
+  name: cloudflare
 
-# secret contains cloudflare_api_token
-cloudflare:
-  proxied: true
-  secretName: cloudflare-dns
+env:
+  - name: CF_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-dns
+        key: cloudflare_api_token
+
+extraArgs:
+  - --exclude-target-net=192.168.0.0/16

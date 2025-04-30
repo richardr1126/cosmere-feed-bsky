@@ -94,6 +94,7 @@ if [ "$LONG" = true ]; then
   # Add helm repositories
   echo "Adding Helm repositories..."
   helm repo add bitnami https://charts.bitnami.com/bitnami
+  helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
   helm repo add jetstack https://charts.jetstack.io
   helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
   helm repo add yugabytedb https://charts.yugabyte.com
@@ -114,7 +115,7 @@ if [ "$LONG" = true ]; then
     --namespace cert-manager \
     --from-literal=cloudflare_api_token=$CLOUDFLARE_API_TOKEN \
     --dry-run=client -o yaml | kubectl apply -f -
-  helm upgrade --install external-dns oci://registry-1.docker.io/bitnamicharts/external-dns \
+  helm upgrade --install external-dns external-dns/external-dns --version 1.15.2 \
     -f ./ingress/external-dns-values.yaml \
     --namespace cert-manager \
     --wait

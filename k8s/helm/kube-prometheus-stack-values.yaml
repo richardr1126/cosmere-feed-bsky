@@ -9,7 +9,6 @@ grafana:
     annotations:
       #cert-manager.io/cluster-issuer: letsencrypt-prod
       external-dns.alpha.kubernetes.io/hostname: metrics.richardr.dev
-      external-dns.alpha.kubernetes.io/target: 71.218.121.109
       external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
     hosts:
       - metrics.richardr.dev
