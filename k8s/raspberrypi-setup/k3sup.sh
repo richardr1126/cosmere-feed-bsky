@@ -3,5 +3,5 @@ k3sup install \
 --tls-san 192.168.0.40 \
 --cluster \
 --k3s-extra-args '--disable servicelb traefik' \
---local-path ~/.kube/config \
+--local-path ~/.kube/raspberry-pi-kubeconfig.yaml \
 --user richard-roberson
