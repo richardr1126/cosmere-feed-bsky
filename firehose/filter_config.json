@@ -1,7 +1,9 @@
 {
     "HANDLES": [
         "stormlightmemes.bsky.social",
-        "brotherwisegames.bsky.social"
+        "brotherwisegames.bsky.social",
+        "brandonsanderson.com",
+        "17thshard.com"
     ],
     "EXCLUDE_HANDLES": [
         "flintds.bsky.social",
@@ -51,6 +53,9 @@
         "shallan pattern",
         "shallan veil",
         "shallan radiant",
+        "rlain renarin",
+        "renarin jasnah",
+        "jasnah shallan",
         "vin kelsier",
         "kelsier survivor",
         "wax wayne marasi",
@@ -59,7 +64,10 @@
         "steris wax",
         "szeth nightblood",
         "shades threnody",
-        "threnody hell"
+        "threnody hell",
+        "odium retribution",
+        "honor odium",
+        "cultivation odium"
     ],
     "TOKENS": [
         "allomancy",
@@ -134,7 +142,11 @@
         "dsnx24",
         "dsnx2024",
         "dragonsteelnexus",
-        "dragonsteelnexus2024"
+        "dragonsteelnexus2024",
+        "dsnx25",
+        "dsnx2025",
+        "dragonsteelnexus25",
+        "dragonsteelnexus2025"
     ],
     "EXCLUDE_TOKENS": [
         "trump",
@@ -143,6 +155,7 @@
         "alleria",
         "uriele",
         "mormon",
-        "BYU"
+        "BYU",
+        "cry voidbringer"
     ]
 }

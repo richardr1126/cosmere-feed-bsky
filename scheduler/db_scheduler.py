@@ -228,16 +228,16 @@ def start_scheduler(client: Client, schedule_hydration: bool = False) -> Backgro
     logger.info("BackgroundScheduler instance created and started.")
 
     # Schedule cleanup_db to run daily at 8 AM UTC
-    scheduler.add_job(
-        cleanup_db,
-        trigger='cron',
-        hour=8,
-        args=[30],
-        id='cleanup_db',
-        max_instances=1,
-        replace_existing=True
-    )
-    logger.info("Scheduled daily cleanup_db job at 8 AM UTC.")
+    # scheduler.add_job(
+    #     cleanup_db,
+    #     trigger='cron',
+    #     hour=8,
+    #     args=[30],
+    #     id='cleanup_db',
+    #     max_instances=1,
+    #     replace_existing=True
+    # )
+    # logger.info("Scheduled daily cleanup_db job at 8 AM UTC.")
 
     if schedule_hydration:
         # Schedule hydrate_posts_with_interactions to run every 30 minutes

@@ -26,8 +26,8 @@ INCLUSIVE_MULTI_TOKENS = filters['INCLUSIVE_MULTI_TOKENS']
 TOKENS = filters['TOKENS']
 EXCLUDE_TOKENS = filters['EXCLUDE_TOKENS']
 
-dids_to_include = [handle_resolver.resolve(handle) for handle in HANDLES]
-dids_to_exclude = [handle_resolver.resolve(handle) for handle in EXCLUDE_HANDLES]
+dids_to_include = [handle_resolver.resolve_dns(handle) for handle in HANDLES]
+dids_to_exclude = [handle_resolver.resolve_dns(handle) for handle in EXCLUDE_HANDLES]
 
 def compile_pattern(items, word_boundary=True, plural=True):
     escaped = [re.escape(item) for item in items]

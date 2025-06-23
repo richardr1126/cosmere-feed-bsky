@@ -24,7 +24,7 @@ fi
 for arg in "$@"; do
   if [ "$arg" == "--long" ]; then
     LONG=true
-  else if [ "$arg" == "--build" ]; then
+  elif [ "$arg" == "--build" ]; then
     BUILD=true
   else
     echo "Unknown parameter: $arg"
@@ -122,10 +122,10 @@ if [ "$LONG" = true ]; then
   kubectl wait --for=condition=Ready clusterissuer/letsencrypt-prod --timeout=60s
 
   # Install NGINX Ingress Controller
-  echo "Installing NGINX Ingress Controller..."
-  helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
-    -f ./ingress/nginx-values.yaml \
-    --wait
+  # echo "Installing NGINX Ingress Controller..."
+  # helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+  #   -f ./ingress/nginx-values.yaml \
+  #   --wait
     
 fi
 

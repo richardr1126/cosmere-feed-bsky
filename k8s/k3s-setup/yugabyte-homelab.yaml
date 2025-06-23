@@ -10,7 +10,7 @@ storage:
     count: 1
     size: 10Gi
   tserver:
-    count: 1
+    count: 2
     size: 10Gi
 
 resource:
@@ -31,8 +31,8 @@ resource:
 
 replicas:
   master: 1
-  tserver: 1
+  tserver: 2
 
 partition:
   master: 1
-  tserver: 1
+  tserver: 2

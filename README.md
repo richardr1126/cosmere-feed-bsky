@@ -137,7 +137,7 @@ This will display the status of:
 ### Local Raspberry Pi Deployment
 
 #### Prerequisites
-- Raspberry Pi 4 (recommended 4GB+ RAM)
+- Raspberry Pi 5 (recommended 4GB+ RAM)
 - Ubuntu Server or Raspberry Pi OS
 - `k3sup` installed on your local machine
 - `kubectl` installed on your local machine
