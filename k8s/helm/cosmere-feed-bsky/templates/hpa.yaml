@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "scheduler.fullname" . }}
+  name: {{ include "cosmere-feed-bsky.fullname" . }}
   labels:
-    {{- include "scheduler.labels" . | nindent 4 }}
+    {{- include "cosmere-feed-bsky.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "scheduler.fullname" . }}
+    name: {{ include "cosmere-feed-bsky.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

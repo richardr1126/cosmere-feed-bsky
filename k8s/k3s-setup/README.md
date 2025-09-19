@@ -43,6 +43,8 @@ k3sup install --ip 192.168.0.18 \
 - `--disable servicelb`: Disable default service load balancer (we'll use kube-vip)
 - `--local-path`: Where to save the kubeconfig file
 
+**Note:** We keep Traefik enabled as it's used as the ingress controller.
+
 ### 2. Configure Kube-VIP for Load Balancing
 
 SSH into your K3s server and run these commands:

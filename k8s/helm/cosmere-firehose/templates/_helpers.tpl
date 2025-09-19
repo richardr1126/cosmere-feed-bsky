@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "firehose.name" -}}
+{{- define "cosmere-firehose.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "firehose.fullname" -}}
+{{- define "cosmere-firehose.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "firehose.chart" -}}
+{{- define "cosmere-firehose.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "firehose.labels" -}}
-helm.sh/chart: {{ include "firehose.chart" . }}
-{{ include "firehose.selectorLabels" . }}
+{{- define "cosmere-firehose.labels" -}}
+helm.sh/chart: {{ include "cosmere-firehose.chart" . }}
+{{ include "cosmere-firehose.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,7 +45,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "firehose.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "firehose.name" . }}
+{{- define "cosmere-firehose.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "cosmere-firehose.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}

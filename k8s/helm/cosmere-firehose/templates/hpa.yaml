@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "firehose.fullname" . }}
+  name: {{ include "cosmere-firehose.fullname" . }}
   labels:
-    {{- include "firehose.labels" . | nindent 4 }}
+    {{- include "cosmere-firehose.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "firehose.fullname" . }}
+    name: {{ include "cosmere-firehose.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

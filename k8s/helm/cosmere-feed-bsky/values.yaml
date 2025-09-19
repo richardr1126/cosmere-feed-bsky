@@ -1,4 +1,4 @@
-# Default values for web.
+# Default values for cosmere-feed-bsky.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -75,7 +75,7 @@ ingress:
         - path: /
           pathType: Prefix
   # tls:
-  #   - secretName: web-tls
+  #   - secretName: cosmere-feed-bsky-tls
   #     hosts:
   #       - cosmere.richardr.dev
 
@@ -133,3 +133,72 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# Scheduler CronJob Configuration
+scheduler:
+  enabled: true
+  
+  # Scheduler image configuration
+  image:
+    repository: ghcr.io/richardr1126/cosmere-scheduler
+    pullPolicy: Always
+    tag: "latest"
+  
+  # Environment variables for scheduler
+  envFrom:
+  - secretRef:
+      name: api-secrets
+  
+  # Pod annotations and labels for scheduler jobs
+  podAnnotations: {}
+  podLabels: {}
+  
+  # Security context for scheduler pods
+  podSecurityContext: {}
+  securityContext: {}
+  
+  # Hydration job configuration
+  hydration:
+    enabled: true
+    # Run every 30 minutes
+    schedule: "*/30 * * * *"
+    timeZone: "UTC"
+    concurrencyPolicy: "Forbid"
+    successfulJobsHistoryLimit: 3
+    failedJobsHistoryLimit: 3
+    command: ["python", "db_scheduler.py", "--job", "hydrate"]
+    resources: {}
+      # limits:
+      #   cpu: 500m
+      #   memory: 512Mi
+      # requests:
+      #   cpu: 100m
+      #   memory: 128Mi
+  
+  # Cleanup job configuration
+  cleanup:
+    enabled: false
+    # Run daily at 8 AM UTC
+    schedule: "0 8 * * *"
+    timeZone: "UTC"
+    concurrencyPolicy: "Forbid"
+    successfulJobsHistoryLimit: 3
+    failedJobsHistoryLimit: 3
+    clearDays: 3
+    command: ["python", "db_scheduler.py", "--job", "cleanup", "--clear-days"]
+    resources: {}
+      # limits:
+      #   cpu: 500m
+      #   memory: 512Mi
+      # requests:
+      #   cpu: 100m
+      #   memory: 128Mi
+  
+  # Additional volumes and volume mounts
+  volumes: []
+  volumeMounts: []
+  
+  # Node selector, tolerations, and affinity for scheduler jobs
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}

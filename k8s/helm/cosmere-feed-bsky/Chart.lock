@@ -1,0 +1,6 @@
+dependencies:
+- name: cosmere-firehose
+  repository: file://../cosmere-firehose
+  version: 0.0.1
+digest: sha256:654bdbe220447e2a6514217b76688d4778425e2900484946648dc7a575ead292
+generated: "2025-09-19T16:44:47.120301-06:00"

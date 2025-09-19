@@ -1,15 +1,11 @@
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.jobstores.base import JobLookupError
-from apscheduler.triggers.date import DateTrigger
-from apscheduler.triggers.interval import IntervalTrigger
-from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
 from atproto import Client, SessionEvent, Session, exceptions
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 import peewee
 import time
-import signal
 import sys
+import os
+import argparse
 
 from utils.logger import logger
 from utils.config import HANDLE, PASSWORD
@@ -17,27 +13,41 @@ from database import db, Post, SessionState
 
 # Main Function
 def main():
-    # Initialize Client
-    client = init_client()
-
-    # Start Scheduler
-    scheduler = start_scheduler(client, schedule_hydration=True)
+    parser = argparse.ArgumentParser(description='Run scheduler tasks as one-time jobs')
+    parser.add_argument('--job', choices=['hydrate', 'cleanup'], required=True,
+                       help='Job type to run: hydrate (hydrate posts) or cleanup (database cleanup)')
+    parser.add_argument('--clear-days', type=int, default=3,
+                       help='Days to keep posts for cleanup job (default: 3)')
     
-    # for job in scheduler.get_jobs():
-    #     job.modify(next_run_time=datetime.now())  # Trigger all jobs immediately
-
-    # Handle graceful shutdown
-    def signal_handler(sig, frame):
-        logger.info("Shutting down scheduler...")
-        shutdown_scheduler(scheduler)
-        sys.exit(0)
-
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-
-    # Keep the main thread alive
-    while True:
-        signal.pause()  # Wait for signals
+    args = parser.parse_args()
+    
+    # Also check environment variable for job type (useful for K8s CronJob)
+    job_type = args.job or os.getenv('SCHEDULER_JOB_TYPE', 'hydrate')
+    clear_days = args.clear_days if args.clear_days != 3 else int(os.getenv('SCHEDULER_CLEAR_DAYS', '3'))
+    
+    logger.info(f"Starting scheduler job: {job_type}")
+    
+    try:
+        if job_type == 'hydrate':
+            # Initialize Client for hydration
+            client = init_client()
+            hydrate_posts_with_interactions(client)
+            logger.info("Hydration job completed successfully")
+        elif job_type == 'cleanup':
+            cleanup_db(clear_days)
+            logger.info(f"Cleanup job completed successfully (cleared {clear_days} days)")
+        else:
+            logger.error(f"Unknown job type: {job_type}")
+            sys.exit(1)
+            
+    except Exception as e:
+        logger.error(f"Job failed with error: {e}")
+        sys.exit(1)
+    finally:
+        # Ensure database connection is closed
+        if not db.is_closed():
+            db.close()
+            logger.info("Database connection closed.")
 
 # Postgres database management functions
 def clear_old_posts(clear_days: int):
@@ -80,7 +90,7 @@ def cleanup_db(clear_days: int = 3):
     vacuum_database()
 
 # Hydration Function with Rate Limit and Expired Token Handling
-def hydrate_posts_with_interactions(client: Client, batch_size: int = 25, scheduler: BackgroundScheduler = None):
+def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
     try:
         with db.connection_context():
             logger.info("Hydration Database connection opened.")
@@ -161,9 +171,8 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25, schedu
                                 reset_time = datetime.fromtimestamp(int(reset_timestamp), timezone.utc)
                             else:
                                 reset_time = datetime.now(timezone.utc) + timedelta(seconds=60)  # Default to 60 seconds
-                            logger.warning(f"Rate limit exceeded during hydration. Next attempt at {reset_time} UTC.")
-                            reschedule_hydration(reset_time, scheduler)
-                            return  # Exit to prevent further API calls
+                            logger.warning(f"Rate limit exceeded during hydration. Will retry in next scheduled run.")
+                            raise api_err  # Re-raise to fail the job so it can be retried
                         elif status_code == 400:
                             # Handle other specific status codes if necessary
                             logger.error(f"Hydration failed with status 400. Content: {api_err.response.content}")
@@ -185,6 +194,7 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25, schedu
 
     except Exception as e:
         logger.error(f"Error in hydration process: {e}")
+        raise e  # Re-raise to fail the job
 
     finally:
         if not db.is_closed():
@@ -192,88 +202,6 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25, schedu
             logger.info("Hydration Database connection closed by force.")
         else :
             logger.info("Hydration Database connection closed.")
-
-# Rescheduling Functions
-def reschedule_hydration(reset_time: datetime, scheduler: BackgroundScheduler):
-    # Pause the interval hydrate_posts job to prevent further attempts
-    try:
-        scheduler.pause_job('hydrate_posts_interval')
-        logger.info("Paused the interval hydrate_posts job due to rate limiting.")
-    except JobLookupError:
-        logger.info("No interval hydrate_posts job to pause.")
-
-    # Schedule a one-time hydrate_posts job at reset_time
-    try:
-        scheduler.remove_job('hydrate_posts_once')
-    except JobLookupError:
-        pass  # No existing one-time job to remove
-
-    # Initialize a new client instance for the scheduled job
-    client = init_client()
-
-    scheduler.add_job(
-        hydrate_posts_with_interactions,
-        trigger=DateTrigger(run_date=reset_time),
-        args=[client],
-        id='hydrate_posts_once',
-        max_instances=1,
-        replace_existing=True
-    )
-    logger.info(f"One-time hydrate_posts job scheduled to run at {reset_time} UTC.")
-
-# Scheduler Initialization
-def start_scheduler(client: Client, schedule_hydration: bool = False) -> BackgroundScheduler:
-    scheduler = BackgroundScheduler()
-    scheduler.start()
-    logger.info("BackgroundScheduler instance created and started.")
-
-    # Schedule cleanup_db to run daily at 8 AM UTC
-    # scheduler.add_job(
-    #     cleanup_db,
-    #     trigger='cron',
-    #     hour=8,
-    #     args=[30],
-    #     id='cleanup_db',
-    #     max_instances=1,
-    #     replace_existing=True
-    # )
-    # logger.info("Scheduled daily cleanup_db job at 8 AM UTC.")
-
-    if schedule_hydration:
-        # Schedule hydrate_posts_with_interactions to run every 30 minutes
-        scheduler.add_job(
-            hydrate_posts_with_interactions,
-            trigger=IntervalTrigger(minutes=30),
-            args=[client,25,scheduler],
-            id='hydrate_posts_interval',
-            max_instances=1,
-            coalesce=True,  # If job is missed, run it immediately
-            replace_existing=True
-        )
-        logger.info("Scheduled interval hydrate_posts_with_interactions job every 30 minutes.")
-
-    # Add listener for job events
-    scheduler.add_listener(lambda event: hydration_job_listener(event, scheduler), EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
-    logger.info("Added hydration_job_listener to the scheduler.")
-
-    return scheduler
-
-# Job Listener
-def hydration_job_listener(event, scheduler: BackgroundScheduler):
-    """
-    Listener to detect when the one-time hydrate_posts job completes
-    and take appropriate actions.
-    """
-    if event.job_id == 'hydrate_posts_once':
-        if event.exception:
-            logger.error("One-time hydrate_posts job failed.")
-        else:
-            logger.info("One-time hydrate_posts job completed successfully.")
-            try:
-                scheduler.resume_job('hydrate_posts_interval')
-                logger.info("Resumed the interval hydrate_posts job after one-time hydration.")
-            except JobLookupError:
-                logger.error("Interval hydrate_posts job not found to resume.")
 
 # Bsky Client Session Management Functions
 def get_session() -> Optional[str]:
@@ -324,21 +252,6 @@ def init_client() -> Client:
         client.login(HANDLE, PASSWORD)
 
     return client
-
-# Scheduler Shutdown Function
-def shutdown_scheduler(scheduler: BackgroundScheduler):
-    try:
-        scheduler.shutdown(wait=False)
-        logger.info("Scheduler shutdown successfully.")
-    except Exception as e:
-        logger.error(f"Error during scheduler shutdown: {e}")
-
-    try:
-        if not db.is_closed():
-            db.close()
-            logger.info("Database connection closed by force")
-    except peewee.PeeweeException as e:
-        logger.error(f"Error closing database: {e}")
 
 if __name__ == '__main__':
     main()

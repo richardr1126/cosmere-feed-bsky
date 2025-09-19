@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "firehose.fullname" . }}
+  name: {{ include "cosmere-firehose.fullname" . }}
   labels:
-    {{- include "firehose.labels" . | nindent 4 }}
+    {{- include "cosmere-firehose.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "firehose.selectorLabels" . | nindent 6 }}
+      {{- include "cosmere-firehose.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,7 +18,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "firehose.labels" . | nindent 8 }}
+        {{- include "cosmere-firehose.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

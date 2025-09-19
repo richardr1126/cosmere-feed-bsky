@@ -1,0 +1,147 @@
+{{- if and .Values.scheduler.enabled .Values.scheduler.hydration.enabled }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "cosmere-feed-bsky.fullname" . }}-hydration
+  labels:
+    {{- include "cosmere-feed-bsky.labels" . | nindent 4 }}
+    app.kubernetes.io/component: scheduler-hydration
+spec:
+  schedule: {{ .Values.scheduler.hydration.schedule | quote }}
+  timeZone: {{ .Values.scheduler.hydration.timeZone | default "UTC" }}
+  concurrencyPolicy: {{ .Values.scheduler.hydration.concurrencyPolicy | default "Forbid" }}
+  successfulJobsHistoryLimit: {{ .Values.scheduler.hydration.successfulJobsHistoryLimit | default 3 }}
+  failedJobsHistoryLimit: {{ .Values.scheduler.hydration.failedJobsHistoryLimit | default 3 }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "cosmere-feed-bsky.labels" . | nindent 12 }}
+            app.kubernetes.io/component: scheduler-hydration
+          {{- with .Values.scheduler.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "cosmere-feed-bsky.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.scheduler.podSecurityContext | nindent 12 }}
+          containers:
+          - name: scheduler
+            securityContext:
+              {{- toYaml .Values.scheduler.securityContext | nindent 14 }}
+            image: "{{ .Values.scheduler.image.repository }}:{{ .Values.scheduler.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.scheduler.image.pullPolicy }}
+            command: {{ .Values.scheduler.hydration.command | toJson }}
+            env:
+            - name: SCHEDULER_JOB_TYPE
+              value: "hydrate"
+            {{- with .Values.scheduler.envFrom }}
+            envFrom:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+            resources:
+              {{- toYaml .Values.scheduler.hydration.resources | nindent 14 }}
+            {{- with .Values.scheduler.volumeMounts }}
+            volumeMounts:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+          restartPolicy: OnFailure
+          {{- with .Values.scheduler.volumes }}
+          volumes:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.scheduler.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.scheduler.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.scheduler.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}
+{{- if and .Values.scheduler.enabled .Values.scheduler.cleanup.enabled }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "cosmere-feed-bsky.fullname" . }}-cleanup
+  labels:
+    {{- include "cosmere-feed-bsky.labels" . | nindent 4 }}
+    app.kubernetes.io/component: scheduler-cleanup
+spec:
+  schedule: {{ .Values.scheduler.cleanup.schedule | quote }}
+  timeZone: {{ .Values.scheduler.cleanup.timeZone | default "UTC" }}
+  concurrencyPolicy: {{ .Values.scheduler.cleanup.concurrencyPolicy | default "Forbid" }}
+  successfulJobsHistoryLimit: {{ .Values.scheduler.cleanup.successfulJobsHistoryLimit | default 3 }}
+  failedJobsHistoryLimit: {{ .Values.scheduler.cleanup.failedJobsHistoryLimit | default 3 }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "cosmere-feed-bsky.labels" . | nindent 12 }}
+            app.kubernetes.io/component: scheduler-cleanup
+          {{- with .Values.scheduler.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "cosmere-feed-bsky.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.scheduler.podSecurityContext | nindent 12 }}
+          containers:
+          - name: scheduler
+            securityContext:
+              {{- toYaml .Values.scheduler.securityContext | nindent 14 }}
+            image: "{{ .Values.scheduler.image.repository }}:{{ .Values.scheduler.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.scheduler.image.pullPolicy }}
+            command: {{ .Values.scheduler.cleanup.command | toJson }}
+            args: ["{{ .Values.scheduler.cleanup.clearDays }}"]
+            env:
+            - name: SCHEDULER_JOB_TYPE
+              value: "cleanup"
+            - name: SCHEDULER_CLEAR_DAYS
+              value: "{{ .Values.scheduler.cleanup.clearDays }}"
+            {{- with .Values.scheduler.envFrom }}
+            envFrom:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+            resources:
+              {{- toYaml .Values.scheduler.cleanup.resources | nindent 14 }}
+            {{- with .Values.scheduler.volumeMounts }}
+            volumeMounts:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+          restartPolicy: OnFailure
+          {{- with .Values.scheduler.volumes }}
+          volumes:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.scheduler.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.scheduler.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.scheduler.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}
