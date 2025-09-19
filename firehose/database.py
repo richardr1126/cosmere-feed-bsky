@@ -18,6 +18,7 @@ class Post(BaseModel):
     indexed_at = peewee.DateTimeField(default=datetime.now(timezone.utc), index=True)
     author = peewee.CharField(null=True, default=None, index=True)
     interactions = peewee.BigIntegerField(default=0, index=True)
+    text = peewee.TextField(null=True, default=None)
 
 class SubscriptionState(BaseModel):
     service = peewee.CharField(unique=True)
