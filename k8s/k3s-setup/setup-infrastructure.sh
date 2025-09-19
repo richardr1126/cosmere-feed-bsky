@@ -90,6 +90,11 @@ helm upgrade --install yugabyte yugabytedb/yugabyte --namespace yugabyte --creat
   --wait \
   --timeout 30m
 
+# Install argo cd
+echo "Installing Argo CD..."
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
 echo "Grafana admin password:"
 kubectl --namespace monitoring get secrets prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d ; echo
 

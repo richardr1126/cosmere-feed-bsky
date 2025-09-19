@@ -81,7 +81,7 @@ helm upgrade --install firehose ./firehose \
   --wait
 
 echo "Installing web chart..."
-helm upgrade --install web ./web \
+helm upgrade --install cosmere-web ./web \
   -f ./web/homelab-values.yaml \
   --wait
 
