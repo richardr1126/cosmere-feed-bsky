@@ -123,11 +123,6 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
                         reply_count = fetched_post.reply_count
                         repost_count = fetched_post.repost_count
                         indexed_at_str = fetched_post.indexed_at
-                        
-                        # Extract text content from the post record
-                        text_content = None
-                        if hasattr(fetched_post, 'record') and hasattr(fetched_post.record, 'text'):
-                            text_content = fetched_post.record.text
 
                         # Convert indexed_at to datetime object
                         try:
@@ -155,23 +150,13 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
                         hot_score *= 100  # Scaling the score
                         hot_score = int(hot_score)
 
-                        # Fetch the current post from the database
+                        # Fetch the current interaction score from the database
                         current_post = Post.get_or_none(Post.uri == uri)
-                        if current_post:
-                            needs_update = False
-                            
-                            # Check if interactions need updating
-                            if current_post.interactions != hot_score:
-                                current_post.interactions = hot_score
-                                needs_update = True
-                            
-                            # Check if text content needs updating (if it's currently null or different)
-                            if text_content and (current_post.text is None or current_post.text != text_content):
-                                current_post.text = text_content
-                                needs_update = True
-                            
-                            if needs_update:
-                                posts_to_update.append(current_post)
+                        if current_post and current_post.interactions != hot_score:
+                            # Update the interactions in list for bulk update
+                            current_post.interactions = hot_score
+                            #logger.info(f"{current_post}")
+                            posts_to_update.append(current_post)
                         
                     # pause the loop for 3 seconds
                     #time.sleep(3)
@@ -200,8 +185,8 @@ def hydrate_posts_with_interactions(client: Client, batch_size: int = 25):
             if posts_to_update:
                 try:
                     with db.atomic():
-                        updated = Post.bulk_update(posts_to_update, fields=['interactions', 'text'])
-                    logger.info(f"Hydrated {updated} posts with updated hot_scores and text content.")
+                        updated = Post.bulk_update(posts_to_update, fields=['interactions'])
+                    logger.info(f"Hydrated {updated} posts with updated hot_scores.")
                 except Exception as e:
                     logger.error(f"Failed to bulk update posts: {e}")
             else:
