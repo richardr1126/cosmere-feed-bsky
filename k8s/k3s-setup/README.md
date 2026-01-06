@@ -32,6 +32,7 @@ Use k3sup to install K3s on your master node:
 k3sup install --ip 192.168.0.18 \
   --tls-san 192.168.0.40 \
   --cluster \
+  --k3s-channel latest \
   --k3s-extra-args '--disable servicelb' \
   --local-path ~/.kube/raspberry-pi-kubeconfig.yaml \
   --user richard-roberson
@@ -89,6 +90,7 @@ kube-vip manifest daemonset \
 kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml
 kubectl create configmap -n kube-system kubevip --from-literal range-global=192.168.0.69-192.168.0.79
 kubectl annotate service traefik -n kube-system kube-vip.io/forwardUPNP="true"
+kubectl rollout restart -n kube-system deployment traefik
 ```
 
 ### 4. Add Additional Nodes (Optional)
@@ -110,16 +112,29 @@ sudo visudo
 ```
 Add the following line to allow passwordless sudo for the user:
 ```bash
+# (End of the sudoers file)
 richard-roberson ALL=(ALL) NOPASSWD: ALL
 ```
-Then, run the following command from your master node to join the new node to the cluster:
+Then, run the following command from your k3sup machine to join the new node to the cluster:
 
+Raspberry Pi 2nd Node:
 ```bash
 # Join the node to the cluster
 k3sup join --ip 192.168.0.30 \
   --server-ip 192.168.0.18 \
   --server \
   --k3s-channel latest \
+  --k3s-extra-args '--disable servicelb' \
+  --user richard-roberson
+```
+
+NAS Node AMD64:
+```bash
+k3sup join --ip 192.168.0.109 \
+  --server-ip 192.168.0.18 \
+  --server \
+  --k3s-channel latest \
+  --k3s-extra-args '--node-taint node-role.kubernetes.io/control-plane=true:NoSchedule --disable servicelb' \
   --user richard-roberson
 ```
 
